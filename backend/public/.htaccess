@@ -1,0 +1,22 @@
+# --------------------------------------------------------------------------
+# DIYET APP - Public .htaccess (URL Yönlendirme)
+# --------------------------------------------------------------------------
+#
+# Bu dosya Apache web sunucusunda backend/public dizininde bulunur.
+# public/ klasörü içindeki tüm istekleri index.php'ye yönlendirir.
+#
+# Görevleri:
+#   - Gerçek dosya olmayan istekleri index.php'ye yönlendirmek
+#   - Statik dosyalara (varsa) doğrudan erişim izni vermek
+#   - API endpoint URL'lerinin düzgün çalışmasını sağlamak
+#
+# Örnek:
+#   /api/users  → index.php tarafından işlenir
+#   /image.png  → Dosya varsa doğrudan sunulur
+#
+# --------------------------------------------------------------------------
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]

@@ -1,0 +1,22 @@
+# --------------------------------------------------------------------------
+# DIYET APP - Root .htaccess (URL Yönlendirme)
+# --------------------------------------------------------------------------
+#
+# Bu dosya Apache web sunucusunda backend kök dizininde bulunur.
+# Gelen tüm HTTP isteklerini public/index.php dosyasına yönlendirir.
+#
+# Görevleri:
+#   - Var olmayan dosya/dizin isteklerini yakalar
+#   - Tüm istekleri public/index.php üzerinden geçirir
+#   - Clean URL yapısı sağlar (örn: /api/users gibi)
+#   - Query string parametrelerini korur (QSA flag)
+#
+# Not: Bu dosya yalnızca Apache sunucusunda çalışır.
+#      Nginx kullanıyorsanız nginx.conf yapılandırması gerekir.
+#
+# --------------------------------------------------------------------------
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php [QSA,L]
