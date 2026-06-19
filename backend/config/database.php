@@ -27,6 +27,7 @@
 class Database
 {
     private string $host;
+    private int $port;
     private string $dbName;
     private string $username;
     private string $password;
@@ -34,7 +35,8 @@ class Database
 
     public function __construct()
     {
-        $this->host = getenv('DB_HOST') ?: 'localhost';
+        $this->host = getenv('DB_HOST') ?: '127.0.0.1';
+        $this->port = (int) (getenv('DB_PORT') ?: 3306);
         $this->dbName = getenv('DB_NAME') ?: 'diyet_app';
         $this->username = getenv('DB_USER') ?: 'root';
         $this->password = getenv('DB_PASS') ?: '';
@@ -44,7 +46,7 @@ class Database
     {
         if ($this->conn === null) {
             try {
-                $dsn = "mysql:host={$this->host};dbname={$this->dbName};charset=utf8mb4";
+                $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->dbName};charset=utf8mb4";
                 $this->conn = new PDO($dsn, $this->username, $this->password, [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

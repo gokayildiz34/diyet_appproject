@@ -1,0 +1,85 @@
+.feed-composer-card {
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #1e1b3a 100%);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  border-radius: 16px;
+}
+
+.feed-composer-segmented {
+  margin-bottom: 16px;
+}
+
+.feed-composer-textarea {
+  background: #12122a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 15px;
+}
+
+.feed-composer-hint {
+  display: block;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.feed-composer-dropzone {
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.feed-composer-dropzone-icon {
+  font-size: 48px;
+  color: rgba(255, 255, 255, 0.2);
+  margin-bottom: 12px;
+}
+
+.feed-composer-dropzone-text {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+}
+
+.feed-composer-dropzone-subtext {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+}
+
+.feed-composer-preview-wrapper {
+  position: relative;
+}
+
+.feed-composer-preview-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+.feed-composer-preview-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.feed-composer-preview-textarea {
+  margin-top: 12px;
+  background: #12122a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-radius: 10px;
+}
+
+.feed-composer-submit-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.feed-composer-submit-btn {
+  border-radius: 10px;
+}

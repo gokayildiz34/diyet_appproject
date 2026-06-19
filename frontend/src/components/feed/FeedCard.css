@@ -1,0 +1,180 @@
+.feed-card {
+  margin-bottom: 16px;
+  background: #1a1a2e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.feed-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+
+.feed-card-avatar {
+  flex-shrink: 0;
+}
+
+.feed-card-user-info {
+  flex: 1;
+}
+
+.feed-card-username {
+  color: #fff;
+  font-size: 15px;
+}
+
+.feed-card-time {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+}
+
+.feed-card-calorie-tag {
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.feed-card-content {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 15px;
+  margin-bottom: 12px;
+  line-height: 1.7;
+}
+
+.feed-card-image-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.feed-card-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.feed-card-macros {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.feed-card-macro-carbs {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-radius: 8px;
+}
+
+.feed-card-macro-protein {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border-radius: 8px;
+}
+
+.feed-card-macro-fat {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-radius: 8px;
+}
+
+.feed-card-actions {
+  display: flex;
+  gap: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 12px;
+}
+
+.feed-card-action-btn {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.feed-card-liked-icon {
+  color: #ef4444;
+}
+
+.feed-card-coach-comment {
+  margin-top: 12px;
+  padding: 14px;
+  background: rgba(124, 58, 237, 0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(124, 58, 237, 0.12);
+}
+
+.feed-card-coach-inner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.feed-card-coach-avatar {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.feed-card-coach-name {
+  color: #c4b5fd;
+  font-size: 13px;
+}
+
+.feed-card-coach-tag {
+  font-size: 10px;
+  line-height: 16px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.15);
+  border: none;
+  color: #a78bfa;
+}
+
+.feed-card-coach-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  margin-bottom: 0;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
+.feed-card-comments-section {
+  margin-top: 12px;
+}
+
+.feed-card-comment-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.feed-card-comment-username {
+  color: #fff;
+  font-size: 13px;
+}
+
+.feed-card-comment-content {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  margin-bottom: 0;
+}
+
+.feed-card-comment-input-wrapper {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.feed-card-comment-input {
+  background: #12122a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-radius: 10px;
+}
+
+.feed-card-comment-submit {
+  border-radius: 10px;
+}

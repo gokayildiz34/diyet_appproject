@@ -1,0 +1,66 @@
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-layout-sider {
+  background: #12122a;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.app-layout-logo-wrapper {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.app-layout-logo {
+  cursor: pointer;
+}
+
+.app-layout-logo-text {
+  color: #a78bfa;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.app-layout-menu {
+  background: transparent;
+  border-inline-end: none;
+  margin-top: 8px;
+}
+
+.app-layout-header {
+  background: #0f0f1a;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.app-layout-bell-icon {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+}
+
+.app-layout-user-dropdown {
+  cursor: pointer;
+}
+
+.app-layout-user-avatar {
+  background-color: #7c3aed;
+}
+
+.app-layout-user-name {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.app-layout-content {
+  margin: 16px;
+  min-height: calc(100vh - 64px - 32px);
+  overflow: auto;
+}
