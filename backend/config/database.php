@@ -35,11 +35,11 @@ class Database
 
     public function __construct()
     {
-        $this->host = getenv('DB_HOST') ?: '127.0.0.1';
-        $this->port = (int) (getenv('DB_PORT') ?: 3306);
-        $this->dbName = getenv('DB_NAME') ?: 'diyet_app';
-        $this->username = getenv('DB_USER') ?: 'root';
-        $this->password = getenv('DB_PASS') ?: '';
+        $this->host = getenv('MYSQLHOST') ?: (getenv('DB_HOST') ?: '127.0.0.1');
+        $this->port = (int) (getenv('MYSQLPORT') ?: (getenv('DB_PORT') ?: 3306));
+        $this->dbName = getenv('MYSQLDATABASE') ?: (getenv('DB_NAME') ?: 'diyet_app');
+        $this->username = getenv('MYSQLUSER') ?: (getenv('DB_USER') ?: 'root');
+        $this->password = getenv('MYSQLPASSWORD') ?: (getenv('DB_PASS') ?: '');
     }
 
     public function getConnection(): PDO
