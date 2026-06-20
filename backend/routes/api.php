@@ -66,6 +66,18 @@ if (($segments[0] ?? '') === 'food-log') {
     $foodLogController = new FoodLogController($getDb());
     $logId = isset($segments[1]) && is_numeric($segments[1]) ? (int) $segments[1] : 0;
 
+    // GET /api/food-log/weekly?from=...
+    if ($requestMethod === 'GET' && ($segments[1] ?? '') === 'weekly') {
+        $foodLogController->weekly();
+        exit();
+    }
+
+    // POST /api/food-log/copy-from-yesterday
+    if ($requestMethod === 'POST' && ($segments[1] ?? '') === 'copy-from-yesterday') {
+        $foodLogController->copyFromYesterday($jsonBody);
+        exit();
+    }
+
     // GET /api/food-log/search?q=...
     if ($requestMethod === 'GET' && ($segments[1] ?? '') === 'search') {
         $foodLogController->search();
@@ -275,6 +287,11 @@ if (($segments[0] ?? '') === 'ai') {
 
     if ($requestMethod === 'POST' && ($segments[1] ?? '') === 'coach-chat') {
         $aiCoachController->coachChat($jsonBody);
+        exit();
+    }
+
+    if ($requestMethod === 'POST' && ($segments[1] ?? '') === 'analyze-food') {
+        $aiCoachController->analyzeFood($jsonBody);
         exit();
     }
 }

@@ -39,18 +39,13 @@ const generateMockAnalysis = () => {
 
 export const aiService = {
   /**
-   * Yemek metin analizi (yerel mock — gerçek AI entegrasyonu ileride)
+   * Yemek metin analizi (Gerçek AI & Fallback Entegrasyonu)
    */
   analyzeFood: async (data) => {
-    const analysis = generateMockAnalysis();
-    return {
-      data: {
-        food_name: analysis.name,
-        summary: `${analysis.name} — tahmini ${analysis.calories} kcal`,
-        calories: analysis.calories,
-        macros: { carbs: analysis.carbs, protein: analysis.protein, fat: analysis.fat },
-      },
-    };
+    const response = await api.post("/ai/analyze-food", {
+      message: data.message || data.query || "",
+    });
+    return response;
   },
 
   /**
