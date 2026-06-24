@@ -581,7 +581,7 @@ export default function FriendsPage() {
                       label: (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <Avatar 
-                            src={d.profile_photo ? `http://localhost:8000${d.profile_photo.startsWith('/') ? '' : '/'}${d.profile_photo}` : null}
+                            src={getImageUrl(d.profile_photo)}
                             icon={!d.profile_photo && <UserOutlined />}
                             size="small"
                           />

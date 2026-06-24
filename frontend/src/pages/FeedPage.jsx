@@ -57,7 +57,9 @@ import { dietPlanService } from "../services/dietPlanService";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { userService } from "../services/userService";
 
-const { Title, Text } = Typography;
+import { getImageUrl } from "../../utils/helpers";
+
+const { Title, Text, Paragraph } = Typography;
 
 const DEMO_USERS = [];
 
@@ -83,10 +85,10 @@ const mapBackendPost = (post) => {
     user: {
       id: String(post.user_id),
       name: post.user_name || "Anonim",
-      avatar: post.user_avatar ? `http://localhost:8000${post.user_avatar}` : null,
+      avatar: getImageUrl(post.user_avatar),
     },
     content: post.content,
-    image: post.image_url ? (post.image_url.startsWith('http') ? post.image_url : `http://localhost:8000${post.image_url}`) : null,
+    image: getImageUrl(post.image_url),
     calories: null,
     macros: null,
     isLiked: post.is_liked || false,
@@ -193,7 +195,7 @@ export default function FeedPage() {
                 user: {
                   id: String(c.user_id),
                   name: c.user_name || "Kullanıcı",
-                  avatar: c.user_avatar ? `http://localhost:8000${c.user_avatar}` : null,
+                  avatar: getImageUrl(c.user_avatar),
                 },
                 timeAgo: formatTimeAgo(c.created_at),
                 createdAt: c.created_at,

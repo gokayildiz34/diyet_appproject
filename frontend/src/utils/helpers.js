@@ -83,3 +83,15 @@ export const debounce = (fn, delay = 300) => {
     timer = setTimeout(() => fn(...args), delay);
   };
 };
+
+export const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+
+  const baseUrl = import.meta.env.VITE_API_URL || '';
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+
+  return `${cleanBase}${cleanPath}`;
+};
+

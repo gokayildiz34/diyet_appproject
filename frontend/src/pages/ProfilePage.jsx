@@ -25,6 +25,7 @@ import { useAuthStore } from "../stores/useAuthStore";
 import { useUserStore } from "../stores/useUserStore";
 import { useFeedStore } from "../stores/useFeedStore";
 import { dietPlanService } from "../services/dietPlanService";
+import { getImageUrl } from "../../utils/helpers";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -158,7 +159,7 @@ export default function ProfilePage() {
           <div style={{ padding: "0 28px 28px", marginTop: -36 }}>
             <Avatar
               size={72}
-              src={user?.profile_photo ? `http://localhost:8000${user.profile_photo}` : null}
+              src={getImageUrl(user?.profile_photo)}
               icon={!user?.profile_photo && <UserOutlined />}
               style={{
                 backgroundColor: "#7c3aed",

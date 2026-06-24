@@ -45,8 +45,9 @@ import {
 import { useUserStore } from "../stores/useUserStore";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { checkinService } from "../services/checkinService";
+import { getImageUrl } from "../../utils/helpers";
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 const formatDate = (value) => {
@@ -573,11 +574,11 @@ export default function WeeklyCheckinPage() {
                     <Space direction="vertical" align="end">
                       {item.photoPath && (
                         <img
-                          src={item.photoPath.startsWith('http') ? item.photoPath : `http://localhost:8000${item.photoPath}`}
+                          src={item.photoPath.startsWith('http') ? item.photoPath : getImageUrl(item.photoPath)}
                           alt="Checkin"
                           style={{ width: 50, height: 50, objectFit: "cover", borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,255,255,0.1)" }}
                           onClick={() => {
-                            setPreviewImage(item.photoPath.startsWith('http') ? item.photoPath : `http://localhost:8000${item.photoPath}`);
+                            setPreviewImage(item.photoPath.startsWith('http') ? item.photoPath : getImageUrl(item.photoPath));
                             setPreviewOpen(true);
                           }}
                         />

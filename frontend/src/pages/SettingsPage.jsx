@@ -33,8 +33,10 @@ import { useUserStore } from "../stores/useUserStore";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
+import { userService } from "../services/userService";
+import { getImageUrl } from "../../utils/helpers";
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 const coachOptions = [
   { value: "demir", label: " Demir  Sert & Disiplinli" },
@@ -238,7 +240,7 @@ export default function SettingsPage() {
           <div style={{ position: "relative", display: "inline-block" }}>
             <Avatar
               size={80}
-              src={user?.profile_photo ? `http://localhost:8000${user.profile_photo}` : null}
+              src={getImageUrl(user?.profile_photo)}
               icon={!user?.profile_photo && <UserOutlined />}
               style={{ border: "2px solid #a78bfa" }}
             />

@@ -34,6 +34,7 @@ import { useAuthStore } from "../../stores/useAuthStore";
 import { useUserStore } from "../../stores/useUserStore";
 import { useNotificationStore } from "../../stores/useNotificationStore";
 import { promptForPush, getPushPermissionStatus } from "../../services/oneSignalService";
+import { getImageUrl } from "../../utils/helpers";
 import appLogo from "../../assets/Gemini_Generated_Image_3hrhw23hrhw23hrh.png";
 
 const { Header, Sider, Content } = Layout;
@@ -375,7 +376,7 @@ export default function AppLayout() {
               <Space style={{ cursor: "pointer" }}>
                 <Avatar
                   size={36}
-                  src={user?.profile_photo ? `http://localhost:8000${user.profile_photo.startsWith('/') ? '' : '/'}${user.profile_photo}` : null}
+                  src={getImageUrl(user?.profile_photo)}
                   icon={!user?.profile_photo && <UserOutlined />}
                   style={{ backgroundColor: "#7c3aed" }}
                 />

@@ -6,7 +6,7 @@ import { Typography, Button, message } from "antd";
 import { ArrowRightOutlined, MailOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import axios from "axios";
+import api from "../services/api";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useUserStore } from "../stores/useUserStore";
 import appLogo from "../assets/Gemini_Generated_Image_3hrhw23hrhw23hrh.png";
@@ -72,7 +72,7 @@ export default function VerifyEmailPage() {
 
     setLoading(true);
     try {
-      const { data } = await axios.post("http://localhost:8000/api/auth/verify-email", {
+      const { data } = await api.post("/auth/verify-email", {
         code: fullCode,
       });
       setAuth(data.user, data.token);
@@ -80,7 +80,7 @@ export default function VerifyEmailPage() {
       // Check if we have onboarding data
       const onboardingData = location.state?.onboardingData;
       if (onboardingData) {
-        await axios.put("http://localhost:8000/api/auth/profile", onboardingData, {
+        await api.put("/auth/profile", onboardingData, {
           headers: { Authorization: `Bearer ${data.token}` }
         });
         
