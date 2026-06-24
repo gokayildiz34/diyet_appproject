@@ -33,6 +33,7 @@ import { motion } from "framer-motion";
 import { useAuthStore } from "../../stores/useAuthStore";
 import { useUserStore } from "../../stores/useUserStore";
 import { useNotificationStore } from "../../stores/useNotificationStore";
+import { promptForPush, getPushPermissionStatus } from "../../services/oneSignalService";
 import appLogo from "../../assets/Gemini_Generated_Image_3hrhw23hrhw23hrh.png";
 
 const { Header, Sider, Content } = Layout;
@@ -40,6 +41,7 @@ const { Text } = Typography;
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [pushStatus, setPushStatus] = useState("default");
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
@@ -48,6 +50,25 @@ export default function AppLayout() {
   const notifications = useNotificationStore((s) => s.items);
   const markAsRead = useNotificationStore((s) => s.markAsRead);
   const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
+
+  // Check initial push permission status
+  useMemo(() => {
+    // Only works in browser
+    if (typeof window !== "undefined") {
+      // Small delay to allow SDK to initialize
+      setTimeout(() => {
+        setPushStatus(getPushPermissionStatus());
+      }, 2000);
+    }
+  }, []);
+
+  const handlePushPermission = async () => {
+    await promptForPush();
+    // After prompt, wait a bit and check again
+    setTimeout(() => {
+      setPushStatus(getPushPermissionStatus());
+    }, 1000);
+  };
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.read).length,
@@ -78,13 +99,11 @@ export default function AppLayout() {
       },
     ];
 
-    if (isPremium) {
-      items.push({
-        key: "/coaches",
-        icon: <RobotOutlined />,
-        label: "Koçlar",
-      });
-    }
+    items.push({
+      key: "/coaches",
+      icon: <RobotOutlined />,
+      label: "Koçlar",
+    });
 
     items.push(
       {
@@ -130,19 +149,32 @@ export default function AppLayout() {
   const userMenuItems = [
     { key: "profile", icon: <UserOutlined />, label: "Profil" },
     { key: "settings", icon: <SettingOutlined />, label: "Ayarlar" },
+  ];
+
+  if (pushStatus === "default") {
+    userMenuItems.push({
+      key: "push_permission",
+      icon: <BellOutlined />,
+      label: "Bildirimlere İzin Ver",
+    });
+  }
+
+  userMenuItems.push(
     { type: "divider" },
     {
       key: "logout",
       icon: <LogoutOutlined />,
       label: "Çıkış Yap",
       danger: true,
-    },
-  ];
+    }
+  );
 
   const handleUserMenuClick = ({ key }) => {
     if (key === "logout") {
       logout();
       navigate("/login");
+    } else if (key === "push_permission") {
+      handlePushPermission();
     } else {
       navigate(`/${key}`);
     }
@@ -313,6 +345,7 @@ export default function AppLayout() {
           }}
         >
           <Space size={16}>
+            {/* Bildirimlere izin ver butonu dropdown'a taşındı */}
             <Popover
               trigger="click"
               placement="bottomRight"
@@ -342,7 +375,8 @@ export default function AppLayout() {
               <Space style={{ cursor: "pointer" }}>
                 <Avatar
                   size={36}
-                  icon={<UserOutlined />}
+                  src={user?.profile_photo ? `http://localhost:8000${user.profile_photo.startsWith('/') ? '' : '/'}${user.profile_photo}` : null}
+                  icon={!user?.profile_photo && <UserOutlined />}
                   style={{ backgroundColor: "#7c3aed" }}
                 />
                 <Text style={{ color: "rgba(255,255,255,0.85)" }}>

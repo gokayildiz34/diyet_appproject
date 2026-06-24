@@ -74,37 +74,28 @@ export default function RegisterPage() {
         email: data.email,
         password: data.password,
       });
-      setAuth(res.user, res.token);
 
       // 2. Kalori hesapla
       const calMap = { sedentary: 1800, light: 2000, moderate: 2200, active: 2500 };
       const dailyCalorie = calMap[data.activity] || 2000;
 
-      // 3. Tüm wizard verilerini backend'e kaydet
-      const token = useAuthStore.getState().token;
-      await axios.put(
-        "http://localhost:8000/api/auth/profile",
-        {
-          goal:             data.goal,
-          gender:           data.gender,
-          age:              data.age ? parseInt(data.age) : null,
-          height:           data.height ? parseFloat(data.height) : null,
-          weight:           data.weight ? parseFloat(data.weight) : null,
-          target_weight:    data.targetWeight ? parseFloat(data.targetWeight) : null,
-          activity_level:   data.activity,
-          daily_calorie_goal: dailyCalorie,
-          onboarding_completed: true,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // 4. Zustand store güncelle
-      const userStore = useUserStore.getState();
-      userStore.setDailyCalorieGoal(dailyCalorie);
-      userStore.setOnboardingCompleted(true);
-
-      message.success("Hoş geldiniz! 🎉");
-      navigate("/feed");
+      // Doğrulama sayfasına yönlendir, onboarding verilerini state ile taşı
+      message.success("Lütfen e-postanıza gelen doğrulama kodunu girin.");
+      navigate("/verify-email?email=" + encodeURIComponent(data.email), {
+        state: {
+          onboardingData: {
+            goal:             data.goal,
+            gender:           data.gender,
+            age:              data.age ? parseInt(data.age) : null,
+            height:           data.height ? parseFloat(data.height) : null,
+            weight:           data.weight ? parseFloat(data.weight) : null,
+            target_weight:    data.targetWeight ? parseFloat(data.targetWeight) : null,
+            activity_level:   data.activity,
+            daily_calorie_goal: dailyCalorie,
+            onboarding_completed: true,
+          }
+        }
+      });
     } catch (err) {
       const msg = err.response?.data?.errors?.join(" ") || err.response?.data?.message || "Kayıt başarısız.";
       message.error(msg);

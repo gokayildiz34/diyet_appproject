@@ -136,6 +136,38 @@ class NotificationController
     }
 
     /**
+     * Dahili kullanım için Push Bildirim Gönderir (Echo yapmaz)
+     * @param string $externalId Kullanıcı ID'si
+     * @param string $title Başlık
+     * @param string $message Mesaj
+     * @param array $data Ek veri
+     * @return bool Başarılı ise true
+     */
+    public function sendPushToUserInternal(string $externalId, string $title, string $message, array $data = []): bool
+    {
+        if (empty($this->appId) || empty($this->restApiKey) || empty($externalId)) {
+            return false;
+        }
+
+        $payload = [
+            'app_id' => $this->appId,
+            'include_aliases' => [
+                'external_id' => [(string)$externalId]
+            ],
+            'target_channel' => 'push',
+            'headings' => ['en' => $title],
+            'contents' => ['en' => $message],
+        ];
+
+        if (!empty($data)) {
+            $payload['data'] = $data;
+        }
+
+        $result = $this->sendRequest($payload);
+        return $result['status'] === 'success';
+    }
+
+    /**
      * Tüm abonelere toplu bildirim gönderir
      * POST /api/notifications/broadcast
      *
@@ -203,7 +235,7 @@ class NotificationController
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYPEER => false, // Localhost SSL hatası için
             CURLOPT_TIMEOUT => 10,
         ]);
 

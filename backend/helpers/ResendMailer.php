@@ -39,6 +39,7 @@ class ResendMailer
                 'Authorization: Bearer ' . $this->apiKey,
                 'Content-Type: application/json',
             ],
+            CURLOPT_SSL_VERIFYPEER => false, // Localhost'ta SSL hatasını engellemek için
             CURLOPT_TIMEOUT        => 10,
         ]);
 
@@ -50,18 +51,34 @@ class ResendMailer
     }
 
     /**
-     * Şifre sıfırlama maili
+     * Şifre sıfırlama maili (6 Haneli OTP)
      */
-    public function sendPasswordReset(string $to, string $name, string $resetLink): bool
+    public function sendPasswordResetCode(string $to, string $name, string $code): bool
     {
-        $subject = 'FitPlate - Şifre Sıfırlama';
+        $subject = 'FitPlate - Şifre Sıfırlama Kodunuz';
         $html = $this->buildTemplate(
             'Şifreni Sıfırla',
             "Merhaba <strong>$name</strong>,<br><br>
-            Şifre sıfırlama talebinde bulundunuz. Aşağıdaki butona tıklayarak şifrenizi sıfırlayabilirsiniz.<br><br>
-            Bu link <strong>1 saat</strong> geçerlidir. Talebi siz yapmadıysanız bu e-postayı görmezden gelebilirsiniz.",
-            $resetLink,
-            'Şifremi Sıfırla'
+            Şifre sıfırlama talebinde bulundunuz. Hesabınızın şifresini sıfırlamak için aşağıdaki 6 haneli doğrulama kodunu kullanabilirsiniz.<br><br>
+            <div style='background:#f4f4f8;padding:16px;border-radius:12px;text-align:center;font-size:32px;letter-spacing:8px;font-weight:bold;color:#7c3aed;margin:24px 0;'>$code</div>
+            Bu kod <strong>1 saat</strong> geçerlidir. Talebi siz yapmadıysanız bu e-postayı görmezden gelebilirsiniz."
+        );
+
+        return $this->send($to, $subject, $html);
+    }
+
+    /**
+     * E-posta doğrulama maili (6 Haneli OTP)
+     */
+    public function sendVerificationCode(string $to, string $name, string $code): bool
+    {
+        $subject = 'FitPlate - E-posta Doğrulama Kodunuz';
+        $html = $this->buildTemplate(
+            'E-postanızı Doğrulayın',
+            "Merhaba <strong>$name</strong>! 🎉<br><br>
+            FitPlate'e hoş geldiniz! Hesabınızı aktifleştirmek ve giriş yapabilmek için lütfen aşağıdaki 6 haneli doğrulama kodunu uygulamaya giriniz.<br><br>
+            <div style='background:#f4f4f8;padding:16px;border-radius:12px;text-align:center;font-size:32px;letter-spacing:8px;font-weight:bold;color:#7c3aed;margin:24px 0;'>$code</div>
+            Sizi aramızda görmek harika!"
         );
 
         return $this->send($to, $subject, $html);
@@ -88,8 +105,16 @@ class ResendMailer
     /**
      * Güzel HTML mail şablonu
      */
-    private function buildTemplate(string $title, string $body, string $btnLink, string $btnText): string
+    private function buildTemplate(string $title, string $body, string $btnLink = null, string $btnText = null): string
     {
+        $btnHtml = '';
+        if ($btnLink && $btnText) {
+            $btnHtml = '<a href="' . $btnLink . '"
+                style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#9333ea);color:#fff;text-decoration:none;
+                       font-size:15px;font-weight:700;padding:14px 32px;border-radius:12px;margin-top:24px;">
+                ' . $btnText . ' →
+              </a>';
+        }
         return <<<HTML
 <!DOCTYPE html>
 <html lang="tr">
@@ -115,11 +140,7 @@ class ResendMailer
             <td style="padding:40px 36px;">
               <h2 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#1a1a2e;">$title</h2>
               <p style="margin:0 0 32px;font-size:15px;line-height:1.7;color:#555;">$body</p>
-              <a href="$btnLink"
-                style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#9333ea);color:#fff;text-decoration:none;
-                       font-size:15px;font-weight:700;padding:14px 32px;border-radius:12px;">
-                $btnText →
-              </a>
+              $btnHtml
             </td>
           </tr>
           <!-- Footer -->

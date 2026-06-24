@@ -60,4 +60,13 @@ export const friendService = {
     const response = await api.delete(`/friends/${friendId}`);
     return response;
   },
+
+  /**
+   * Kullanıcı ara
+   * GET /api/users/search?q={query}
+   */
+  searchUsers: async (query) => {
+    const response = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
+    return response;
+  },
 };

@@ -133,7 +133,7 @@ export default function DietHubPage() {
     setSharingProgress(true);
     try {
       await feedService.createPost({
-        content: `Bugünkü diyet ilerlemem: ${dailyCaloriesConsumed}/${dailyCalorieGoal} kcal (%${caloriePercent}). Hedefime devam! 💪`,
+        content: `Bugünkü diyet ilerlemem: ${dailyCaloriesConsumed}/${dailyCalorieGoal} kcal (%${caloriePercent}). Hedefime devam! `,
         metadata: {
           type: "diet_progress",
           progress: { consumed: dailyCaloriesConsumed, goal: dailyCalorieGoal, percent: caloriePercent },
@@ -154,7 +154,7 @@ export default function DietHubPage() {
   };
 
   const statusColor = caloriePercent >= 90 ? "#ef4444" : caloriePercent >= 60 ? "#10b981" : "#a78bfa";
-  const statusLabel = caloriePercent >= 90 ? "🔥 Sınırda" : caloriePercent >= 60 ? "✅ İyi gidiyorsun" : "💪 Devam et";
+  const statusLabel = caloriePercent >= 90 ? " Sınırda" : caloriePercent >= 60 ? "Üç& İyi gidiyorsun" : " Devam et";
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto" }}>
@@ -173,14 +173,14 @@ export default function DietHubPage() {
             letterSpacing: -0.5,
           }}
         >
-          🥗 Diyet Merkezi
+           Diyet Merkezi
         </Title>
         <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>
           Günlük beslenme takibi ve koç planları
         </Text>
       </motion.div>
 
-      {/* ===== BUGÜNKÜ BESLENMENİZ ===== */}
+      {/* ===== BUGÜçNKÜç BESLENMENİZ ===== */}
       <motion.div {...fadeUp(0.05)}>
         <Card
           styles={{ body: { padding: 24 } }}
@@ -269,7 +269,7 @@ export default function DietHubPage() {
           styles={{ body: { padding: 20 } }}
           style={{
             marginBottom: 16,
-            background: "linear-gradient(145deg, #1a1a2e, #16213e)",
+            background: "linear-gradient(145deg, var(--bg-container), #16213e)",
             border: "1px solid rgba(124,58,237,0.12)",
             borderRadius: 16,
           }}
@@ -334,7 +334,7 @@ export default function DietHubPage() {
           styles={{ body: { padding: 20 } }}
           style={{
             marginBottom: 16,
-            background: "linear-gradient(145deg, #1a1a2e, #16213e)",
+            background: "linear-gradient(145deg, var(--bg-container), #16213e)",
             border: "1px solid rgba(16,185,129,0.18)",
             borderRadius: 16,
           }}

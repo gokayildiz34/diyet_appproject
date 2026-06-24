@@ -1,7 +1,7 @@
 /**
  * FitPlate - Ayarlar Sayfası
  */
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Typography,
@@ -13,6 +13,9 @@ import {
   Input,
   Modal,
   Form,
+  Avatar,
+  Upload,
+  message,
 } from "antd";
 import {
   SettingOutlined,
@@ -20,6 +23,9 @@ import {
   UserOutlined,
   LockOutlined,
   LogoutOutlined,
+  EyeInvisibleOutlined,
+  MailOutlined,
+  CameraOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
@@ -31,9 +37,9 @@ import { authService } from "../services/authService";
 const { Title, Text } = Typography;
 
 const coachOptions = [
-  { value: "demir", label: "🦾 Demir — Sert & Disiplinli" },
-  { value: "ipek", label: "🌸 İpek — Nazik & Destekleyici" },
-  { value: "zen", label: "🧘 Zen — Dengeli & Bilge" },
+  { value: "demir", label: " Demir  Sert & Disiplinli" },
+  { value: "ipek", label: "R İpek  Nazik & Destekleyici" },
+  { value: "zen", label: " Zen  Dengeli & Bilge" },
 ];
 
 export default function SettingsPage() {
@@ -48,10 +54,12 @@ export default function SettingsPage() {
     setDailyCalorieGoal,
     notificationsEnabled,
     setNotificationsEnabled,
-    autoShareDietEnabled,
-    setAutoShareDietEnabled,
-    autoShareDietTime,
-    setAutoShareDietTime,
+    profileVisibility,
+    setProfileVisibility,
+    waterReminderEnabled,
+    setWaterReminderEnabled,
+    weeklyReportEmail,
+    setWeeklyReportEmail,
     mealReminderEnabled,
     setMealReminderEnabled,
   } = useUserStore();
@@ -59,10 +67,35 @@ export default function SettingsPage() {
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordForm] = Form.useForm();
+  const [usernameModalOpen, setUsernameModalOpen] = useState(false);
+  const [usernameLoading, setUsernameLoading] = useState(false);
+  const [usernameForm] = Form.useForm();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleAvatarUpload = async (info) => {
+    if (info.file.status === "uploading") return;
+    const file = info.file.originFileObj || info.file;
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      try {
+        const base64Str = reader.result;
+        const res = await authService.updateProfile({ photo_base64: base64Str });
+        if (res.data?.user) {
+          setUser(res.data.user);
+          toast.success("Profil fotoğrafı güncellendi.");
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Profil fotoğrafı yüklenemedi.");
+      }
+    };
   };
 
   /** Koç değişince backend'e sync */
@@ -97,11 +130,42 @@ export default function SettingsPage() {
       setPasswordModalOpen(false);
       passwordForm.resetFields();
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Şifre değiştirilemedi.",
-      );
+      toast.error(err?.response?.data?.message || "Şifre değiştirilemedi.");
     } finally {
       setPasswordLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Ayarlar sayfası açıldığında en güncel profil verisini al
+    const fetchProfile = async () => {
+      try {
+        const res = await authService.getProfile();
+        if (res.data?.user) {
+          setUser(res.data.user);
+        }
+      } catch (err) {
+        console.error("Profil güncellenemedi", err);
+      }
+    };
+    fetchProfile();
+  }, [setUser]);
+
+  const handleChangeUsername = async (values) => {
+    setUsernameLoading(true);
+    try {
+      const res = await authService.updateProfile({
+        username: values.username,
+      });
+      if (res.data?.user) {
+        setUser(res.data.user);
+        toast.success("Kullanıcı adınız başarıyla güncellendi");
+        setUsernameModalOpen(false);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Kullanıcı adı güncellenemedi");
+    } finally {
+      setUsernameLoading(false);
     }
   };
 
@@ -159,10 +223,61 @@ export default function SettingsPage() {
           Ayarlar
         </Title>
 
+        {/* Profil Kartı */}
+        <Card
+          style={{
+            background: "var(--bg-container)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 16,
+            marginBottom: 16,
+            textAlign: "center",
+            padding: "20px 0",
+          }}
+          styles={{ body: { padding: 0 } }}
+        >
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <Avatar
+              size={80}
+              src={user?.profile_photo ? `http://localhost:8000${user.profile_photo}` : null}
+              icon={!user?.profile_photo && <UserOutlined />}
+              style={{ border: "2px solid #a78bfa" }}
+            />
+            <Upload
+              showUploadList={false}
+              beforeUpload={() => false}
+              onChange={handleAvatarUpload}
+              accept="image/*"
+            >
+              <Button
+                shape="circle"
+                icon={<CameraOutlined />}
+                size="small"
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  right: 0,
+                  background: "#7c3aed",
+                  color: "#fff",
+                  border: "none",
+                }}
+              />
+            </Upload>
+          </div>
+          <Title level={4} style={{ color: "#fff", marginTop: 12, marginBottom: 4 }}>
+            {user?.name}
+          </Title>
+          <Text style={{ color: "#a78bfa", display: 'block', marginBottom: 4 }}>
+            @{user?.username}
+          </Text>
+          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
+            {user?.email}
+          </Text>
+        </Card>
+
         {/* Beslenme Ayarları */}
         <Card
           style={{
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
             marginBottom: 16,
@@ -201,7 +316,7 @@ export default function SettingsPage() {
           />
 
           <SettingRow
-            icon="🎯"
+            icon=""
             label="Günlük Kalori Hedefi"
             description="Koçunuz bu hedefe göre yönlendirir"
           >
@@ -221,31 +336,13 @@ export default function SettingsPage() {
           />
 
           <SettingRow
-            icon="🤖"
-            label="Koç Diyet Listesi Otomatik Paylaşım"
-            description="Koçun günlük planı belirlediğiniz saatte otomatik paylaşılır"
+            icon={<EyeInvisibleOutlined />}
+            label="Profil Gizliliği"
+            description="Sadece arkadaşlarım görsün"
           >
             <Switch
-              checked={autoShareDietEnabled}
-              onChange={setAutoShareDietEnabled}
-            />
-          </SettingRow>
-
-          <Divider
-            style={{ margin: 0, borderColor: "rgba(255,255,255,0.04)" }}
-          />
-
-          <SettingRow
-            icon="⏰"
-            label="Otomatik Paylaşım Saati"
-            description="Örnek: 08:30"
-          >
-            <Input
-              type="time"
-              value={autoShareDietTime}
-              onChange={(e) => setAutoShareDietTime(e.target.value)}
-              disabled={!autoShareDietEnabled}
-              style={{ width: 120 }}
+              checked={profileVisibility === "private"}
+              onChange={(checked) => setProfileVisibility(checked ? "private" : "public")}
             />
           </SettingRow>
         </Card>
@@ -253,7 +350,7 @@ export default function SettingsPage() {
         {/* Bildirim Ayarları */}
         <Card
           style={{
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
             marginBottom: 16,
@@ -289,7 +386,7 @@ export default function SettingsPage() {
           />
 
           <SettingRow
-            icon="🍽️"
+            icon="️"
             label="Öğün Hatırlatıcı"
             description="Yemek girişi için günlük hatırlatma"
           >
@@ -298,12 +395,42 @@ export default function SettingsPage() {
               onChange={setMealReminderEnabled}
             />
           </SettingRow>
+
+          <Divider
+            style={{ margin: 0, borderColor: "rgba(255,255,255,0.04)" }}
+          />
+
+          <SettingRow
+            icon=""
+            label="Su İçme Hatırlatıcısı"
+            description="Gün içinde su içmeniz için bildirim gönderir"
+          >
+            <Switch
+              checked={waterReminderEnabled ?? true}
+              onChange={setWaterReminderEnabled}
+            />
+          </SettingRow>
+
+          <Divider
+            style={{ margin: 0, borderColor: "rgba(255,255,255,0.04)" }}
+          />
+
+          <SettingRow
+            icon={<MailOutlined />}
+            label="Haftalık Rapor E-postası"
+            description="Gelişiminizi her pazar e-postanıza göndeririz"
+          >
+            <Switch
+              checked={weeklyReportEmail ?? true}
+              onChange={setWeeklyReportEmail}
+            />
+          </SettingRow>
         </Card>
 
         {/* Hesap */}
         <Card
           style={{
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
           }}
@@ -321,6 +448,23 @@ export default function SettingsPage() {
           >
             HESAP
           </Text>
+
+          <SettingRow icon={<UserOutlined />} label="Kullanıcı Adı">
+            <Button
+              size="small"
+              style={{ borderRadius: 8 }}
+              onClick={() => {
+                usernameForm.setFieldsValue({ username: user?.username });
+                setUsernameModalOpen(true);
+              }}
+            >
+              Değiştir
+            </Button>
+          </SettingRow>
+
+          <Divider
+            style={{ margin: 0, borderColor: "rgba(255,255,255,0.04)" }}
+          />
 
           <SettingRow icon={<LockOutlined />} label="Şifre Değiştir">
             <Button
@@ -414,6 +558,45 @@ export default function SettingsPage() {
             style={{ borderRadius: 10 }}
           >
             Şifreyi Değiştir
+          </Button>
+        </Form>
+      </Modal>
+
+      {/* Kullanıcı Adı Değiştir Modalı */}
+      <Modal
+        title="Kullanıcı Adı Değiştir"
+        open={usernameModalOpen}
+        onCancel={() => setUsernameModalOpen(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <Form
+          form={usernameForm}
+          layout="vertical"
+          onFinish={handleChangeUsername}
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Yeni Kullanıcı Adı"
+            name="username"
+            rules={[
+              { required: true, message: "Kullanıcı adı girin" },
+              { min: 3, message: "En az 3 karakter olmalıdır" },
+              { pattern: /^[a-zA-Z0-9_]+$/, message: "Sadece harf, rakam ve alt çizgi kullanabilirsiniz" }
+            ]}
+            extra="Sadece İngilizce harfler, rakamlar ve alt çizgi (_) kullanabilirsiniz."
+          >
+            <Input placeholder="Kullanıcı adı (örn: cool_user99)" />
+          </Form.Item>
+
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={usernameLoading}
+            block
+            style={{ borderRadius: 8, height: 40 }}
+          >
+            Kaydet
           </Button>
         </Form>
       </Modal>

@@ -33,7 +33,7 @@ class AuthMiddleware
             self::unauthorized('Token bulunamadı. Authorization header gerekli.');
         }
 
-        $secret = getenv('JWT_SECRET') ?: 'default-secret-change-me';
+        $secret = $_ENV['JWT_SECRET'] ?? 'super_secret_diet_app_jwt_key_2026';
 
         $payload = JWTHelper::decode($token, $secret);
 
@@ -58,11 +58,13 @@ class AuthMiddleware
 
         if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
             $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (isset($_SERVER['HTTP_X_AUTH_TOKEN'])) {
+            $authHeader = $_SERVER['HTTP_X_AUTH_TOKEN'];
         } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
             $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
         } elseif (function_exists('apache_request_headers')) {
             $headers = apache_request_headers();
-            $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+            $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? $headers['X-Auth-Token'] ?? $headers['x-auth-token'] ?? null;
         }
 
         if ($authHeader === null) {

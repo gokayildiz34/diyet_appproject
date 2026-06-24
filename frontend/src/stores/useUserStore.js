@@ -9,15 +9,15 @@ export const useUserStore = create(
     (set) => ({
       // Coach persona: 'demir' (strict), 'ipek' (gentle), 'zen' (balanced)
       coachPersona: "demir",
-      isPremium: false,
-      membershipTier: "free",
+      isPremium: true,
+      membershipTier: "premium",
       dailyCalorieGoal: 2000,
       dailyCaloriesConsumed: 0,
       notificationsEnabled: true,
       mealReminderEnabled: true,
-      autoShareDietEnabled: false,
-      autoShareDietTime: "08:30",
-      lastDietAutoShareDate: null,
+      profileVisibility: "public",
+      waterReminderEnabled: true,
+      weeklyReportEmail: true,
       recentLikeActivities: [],
       recentCommentActivities: [],
       weeklyCheckins: [],
@@ -26,8 +26,7 @@ export const useUserStore = create(
       setCoachPersona: (persona) =>
         set({
           coachPersona: persona,
-          // Koç değişince yeni koç planı aynı gün tekrar üretilebilsin
-          lastDietAutoShareDate: null,
+
         }),
       setIsPremium: (isPremium) => set({ isPremium }),
       setMembershipTier: (membershipTier) =>
@@ -45,10 +44,9 @@ export const useUserStore = create(
         set({ notificationsEnabled: enabled }),
       setMealReminderEnabled: (enabled) =>
         set({ mealReminderEnabled: enabled }),
-      setAutoShareDietEnabled: (enabled) =>
-        set({ autoShareDietEnabled: enabled }),
-      setAutoShareDietTime: (time) => set({ autoShareDietTime: time }),
-      setLastDietAutoShareDate: (date) => set({ lastDietAutoShareDate: date }),
+      setProfileVisibility: (visibility) => set({ profileVisibility: visibility }),
+      setWaterReminderEnabled: (enabled) => set({ waterReminderEnabled: enabled }),
+      setWeeklyReportEmail: (enabled) => set({ weeklyReportEmail: enabled }),
       addLikeActivity: (activity) =>
         set((state) => ({
           recentLikeActivities: [

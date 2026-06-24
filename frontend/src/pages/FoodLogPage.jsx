@@ -12,8 +12,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useUserStore } from "../stores/useUserStore";
+import { aiService } from "../services/aiService";
 
-const API = "http://localhost:8000/api";
+const API = "/api";
+
 
 const MEALS = [
   { key: "kahvalti",     label: "Kahvaltı",    icon: "🌅", color: "#f59e0b", hours: [6, 10] },
@@ -161,6 +163,10 @@ export default function FoodLogPage() {
   // Arama
   const [activeMeal, setActiveMeal] = useState(guessActiveMeal);
   const [query, setQuery]     = useState("");
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastType, setToastType] = useState("success");
+  const [analyzingImage, setAnalyzingImage] = useState(false);
+  const fileInputRef = useRef(null);
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected]   = useState(null);
@@ -235,6 +241,52 @@ export default function FoodLogPage() {
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  /* ── Fotoğraf Yükleme ve Analiz ── */
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Fotoğraf boyutu 5MB'dan küçük olmalıdır.", "error");
+      return;
+    }
+
+    setAnalyzingImage(true);
+    showToast("Fotoğraf analiz ediliyor... 📸", "success");
+    
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result;
+        try {
+          const res = await aiService.analyzeFoodImage(base64String, file.type);
+          if (res.data && res.data.food_name) {
+            setSelected({
+              name: res.data.food_name,
+              calories: res.data.calories,
+              protein: res.data.protein,
+              carbs: res.data.carbs,
+              fat: res.data.fat,
+              source: res.data.source
+            });
+            setQuery(res.data.food_name);
+            setShowDropdown(false);
+            setAmount(100);
+            showToast("Analiz tamamlandı! ✨", "success");
+          }
+        } catch (error) {
+          showToast("Analiz başarısız oldu.", "error");
+        } finally {
+          setAnalyzingImage(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      showToast("Dosya okunamadı.", "error");
+      setAnalyzingImage(false);
+    }
+  };
 
   /* ── Yemek seç ── */
   const selectFood = (food) => {
@@ -507,14 +559,36 @@ export default function FoodLogPage() {
             {addTab === "search" && (
               <div>
                 <div ref={searchRef} style={{ position:"relative", marginBottom:12 }}>
-                  <input placeholder="Yemek ara... (örn: tavuk, elma, pilav, börek)"
+                  <input placeholder="Yemek ara veya sağdan fotoğraf ekle..."
                     value={query}
                     onChange={(e) => { setQuery(e.target.value); setSelected(null); }}
                     onFocus={() => results.length > 0 && setShowDropdown(true)}
-                    style={{ ...inp, paddingRight:40 }} />
-                  <span style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", fontSize:16, opacity:0.4 }}>
-                    {searching ? "⏳" : "🔍"}
-                  </span>
+                    style={{ ...inp, paddingRight:70 }} />
+                  
+                  <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", display:"flex", alignItems:"center", gap:8 }}>
+                    {searching && <span style={{ fontSize:16, opacity:0.4 }}>⏳</span>}
+                    
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={analyzingImage}
+                      title="Fotoğraftan Analiz Et"
+                      style={{
+                        background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.3)",
+                        borderRadius:"50%", width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center",
+                        cursor: analyzingImage ? "wait" : "pointer", color:"#a78bfa", fontSize:16,
+                        opacity: analyzingImage ? 0.5 : 1, transition:"all 0.2s"
+                      }}
+                    >
+                      {analyzingImage ? "⏳" : "📷"}
+                    </button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      accept="image/*" 
+                      style={{ display: "none" }} 
+                      onChange={handleImageUpload} 
+                    />
+                  </div>
 
                   {/* Dropdown */}
                   <AnimatePresence>

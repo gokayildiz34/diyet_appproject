@@ -49,18 +49,26 @@ export const aiService = {
   },
 
   /**
-   * Yemek fotoğraf analizi (yerel mock — gerçek AI entegrasyonu ileride)
+   * Yemek fotoğraf analizi (Gerçek AI Vision Entegrasyonu)
    */
-  analyzeFoodImage: async () => {
-    const analysis = generateMockAnalysis();
-    return {
-      data: {
-        food_name: analysis.name,
-        summary: `📸 ${analysis.name} tespit edildi — ${analysis.calories} kcal`,
-        calories: analysis.calories,
-        macros: { carbs: analysis.carbs, protein: analysis.protein, fat: analysis.fat },
-      },
-    };
+  analyzeFoodImage: async (imageBase64, mimeType = "image/jpeg") => {
+    const response = await api.post("/ai/analyze-food-image", {
+      image: imageBase64,
+      mimeType: mimeType,
+    });
+    return response;
+  },
+
+  /**
+   * Keşfet kısmında paylaşılan fotoğrafa koç yorumu (Gerçek AI Entegrasyonu)
+   */
+  generateCoachCommentForFeed: async (postId, imageUrl, coachPersona = "demir") => {
+    const response = await api.post("/ai/coach-comment-feed-image", {
+      post_id: postId,
+      image_url: imageUrl,
+      coachPersona: coachPersona,
+    });
+    return response;
   },
 
   /**

@@ -28,7 +28,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
-// Doğal avatar renk havuzu — her kullanıcıya farklı bir renk
+// Doğal avatar renk havuzu  her kullanıcıya farklı bir renk
 const avatarColors = [
   "#7c3aed",
   "#2563eb",
@@ -85,7 +85,7 @@ export default function FeedCard({
       <Card
         style={{
           marginBottom: 16,
-          background: "#1a1a2e",
+          background: "var(--bg-container)",
           border: "1px solid rgba(255,255,255,0.06)",
           borderRadius: 16,
         }}
@@ -194,12 +194,12 @@ export default function FeedCard({
           >
             {post.metadata?.type === "coach_diet_plan" && (
               <Tag color="purple" style={{ borderRadius: 16, margin: 0 }}>
-                🤖 Koç Diyet Planı
+                🌟 Koç Diyet Planı
               </Tag>
             )}
             {post.metadata?.type === "coach_chat_plan" && (
               <Tag color="magenta" style={{ borderRadius: 16, margin: 0 }}>
-                💬 Koç Sohbet Planı
+                 Koç Sohbet Planı
               </Tag>
             )}
             {post.metadata?.autoShared && (
@@ -209,12 +209,12 @@ export default function FeedCard({
             )}
             {post.metadata?.type === "food_analysis" && (
               <Tag color="cyan" style={{ borderRadius: 16, margin: 0 }}>
-                📸 Fotoğraf Analizi
+                 Fotoğraf Analizi
               </Tag>
             )}
             {post.metadata?.type === "diet_progress" && (
               <Tag color="green" style={{ borderRadius: 16, margin: 0 }}>
-                📈 Diyet İlerlemesi
+                 Diyet İlerlemesi
               </Tag>
             )}
           </div>
@@ -268,7 +268,7 @@ export default function FeedCard({
                 borderRadius: 8,
               }}
             >
-              🍞 {post.macros.carbs}g Karbonhidrat
+               {post.macros.carbs}g Karbonhidrat
             </Tag>
             <Tag
               style={{
@@ -278,7 +278,7 @@ export default function FeedCard({
                 borderRadius: 8,
               }}
             >
-              🥩 {post.macros.protein}g Protein
+               {post.macros.protein}g Protein
             </Tag>
             <Tag
               style={{
@@ -288,7 +288,7 @@ export default function FeedCard({
                 borderRadius: 8,
               }}
             >
-              🧈 {post.macros.fat}g Yağ
+               {post.macros.fat}g Yaş
             </Tag>
           </div>
         )}
@@ -304,7 +304,7 @@ export default function FeedCard({
             }}
           >
             <Text style={{ color: "#34d399", fontSize: 12, fontWeight: 700 }}>
-              📈 Diyet İlerlemesi
+               Diyet İlerlemesi
             </Text>
             <br />
             <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
@@ -360,7 +360,7 @@ export default function FeedCard({
           </Button>
         </div>
 
-        {/* Koç Yorumu — doğal bir kullanıcı yorumu gibi görünür */}
+        {/* Koç Yorumu  doğal bir kullanıcı yorumu gibi görünür */}
         <AnimatePresence>
           {post.coachComment && (
             <motion.div

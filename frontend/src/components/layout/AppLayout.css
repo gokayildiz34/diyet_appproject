@@ -32,7 +32,7 @@
 }
 
 .app-layout-header {
-  background: #0f0f1a;
+  background: var(--bg-primary);
   padding: 0 24px;
   display: flex;
   align-items: center;

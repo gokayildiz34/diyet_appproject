@@ -55,7 +55,7 @@ const coachOptions = [
     subtitle: "Nazik & Destekleyici",
     color: "#ec4899",
     welcome:
-      "Harika, birlikte sürdürülebilir bir plan hazırlayalım. İsteklerini yaz 💕",
+      "Harika, birlikte sürdürülebilir bir plan hazırlayalım. İsteklerini yaz 🌸",
   },
   {
     key: "zen",
@@ -183,14 +183,14 @@ export default function CoachesPage() {
         plan,
         reply:
           data?.reply ||
-          `${plan.coach.coachName} planını hazırladım. Uygun görürsen akışta paylaşabilirsin.`,
+          `${plan.coach.coachName} planını hazırladım. Planı profilinize ekledim, oradan takip edebilirsiniz.`,
       };
     } catch {
       const fallbackReply =
         coachPersona === "demir"
           ? "Plan hazır. Kurallara sadık kalırsan sonuç gelir."
           : coachPersona === "ipek"
-            ? "Sana uygun bir plan oluşturdum. Küçük adımlarla harika ilerleyeceğiz 💕"
+            ? "Sana uygun bir plan oluşturdum. Küçük adımlarla harika ilerleyeceğiz 🌸"
             : "Dengeli bir plan hazırladım. Gün içinde su ve uyku düzenini de koru.";
 
       return { plan, reply: fallbackReply };
@@ -209,24 +209,6 @@ export default function CoachesPage() {
     const { plan, reply } = await generatePlan(value);
     setLatestPlan(plan);
 
-    const autoPostPayload = {
-      content: `🧑‍🏫 ${plan.coach.coachName}, ${user?.name || "kullanıcı"} için diyet listesi hazırladı.\n\n${buildDietPlanPostContent(plan)}`,
-      calories: plan.totalCalories,
-      coachComment: {
-        coachName: plan.coach.coachName,
-        color: plan.coach.color,
-        text: "Kullanıcının talebine göre planı oluşturdum. Bugün bu plana odaklanıyoruz.",
-      },
-      metadata: {
-        type: "coach_diet_plan",
-        source: "coach_auto_post",
-        requestedBy: user?.name || "Kullanıcı",
-      },
-    };
-
-    addLocalCoachPost(autoPostPayload);
-    void syncCoachPostToBackend(autoPostPayload);
-
     // Diyet planını DB'ye kaydet
     try {
       await dietPlanService.createPlan({
@@ -238,7 +220,7 @@ export default function CoachesPage() {
       // Backend'e erişilemezse sessizce devam et
     }
 
-    toast.success("Koç, diyet listesini senin adına akışta paylaştı.");
+    toast.success("Diyet listen hazırlandı ve profilinize eklendi.");
 
     setMessages((prev) => [
       ...prev,
@@ -309,7 +291,7 @@ export default function CoachesPage() {
               Bu sayfaya erişmek için Bronze, Gold veya Diamond üyelik gerekir.
             </Text>
             <Button type="primary" onClick={() => navigate("/membership")}>
-              Üyelik Planlarını Gör
+              Üçyelik Planlarını Gör
             </Button>
           </Space>
         </Card>
@@ -344,7 +326,7 @@ export default function CoachesPage() {
           <Col xs={24} lg={9}>
             <Card
               style={{
-                background: "#1a1a2e",
+                background: "var(--bg-container)",
                 border: "1px solid rgba(255,255,255,0.06)",
                 borderRadius: 14,
               }}
@@ -421,7 +403,7 @@ export default function CoachesPage() {
           <Col xs={24} lg={15}>
             <Card
               style={{
-                background: "#1a1a2e",
+                background: "var(--bg-container)",
                 border: "1px solid rgba(255,255,255,0.06)",
                 borderRadius: 14,
                 marginBottom: 12,
@@ -501,7 +483,7 @@ export default function CoachesPage() {
             {latestPlan && (
               <Card
                 style={{
-                  background: "#1a1a2e",
+                  background: "var(--bg-container)",
                   border: "1px solid rgba(16,185,129,0.28)",
                   borderRadius: 14,
                 }}

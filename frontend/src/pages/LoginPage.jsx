@@ -165,7 +165,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <Text style={{ color: "rgba(255,255,255,0.15)", fontSize: 12, marginTop: 40 }}>
-        FitPlate © 2025 — Akıllı Beslenme Platformu
+        FitPlate © {new Date().getFullYear()} — Akıllı Beslenme Platformu
       </Text>
     </div>
   );

@@ -33,6 +33,11 @@ if (($segments[0] ?? '') === 'auth') {
         exit();
     }
 
+    if ($requestMethod === 'POST' && ($segments[1] ?? '') === 'verify-email') {
+        $authController->verifyEmail($jsonBody);
+        exit();
+    }
+
     if ($requestMethod === 'GET' && ($segments[1] ?? '') === 'me') {
         $authController->me();
         exit();
@@ -292,6 +297,16 @@ if (($segments[0] ?? '') === 'ai') {
 
     if ($requestMethod === 'POST' && ($segments[1] ?? '') === 'analyze-food') {
         $aiCoachController->analyzeFood($jsonBody);
+        exit();
+    }
+
+    if ($requestMethod === 'POST' && ($segments[1] ?? '') === 'analyze-food-image') {
+        $aiCoachController->analyzeFoodImage($jsonBody);
+        exit();
+    }
+
+    if ($requestMethod === 'POST' && ($segments[1] ?? '') === 'coach-comment-feed-image') {
+        $aiCoachController->coachCommentFeedImage($jsonBody);
         exit();
     }
 }

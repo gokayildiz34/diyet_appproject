@@ -1,5 +1,5 @@
 /**
- * FitPlate - Üyelik ve Ödeme Sayfası
+ * FitPlate - Üçyelik ve Ödeme Sayfası
  */
 import { useEffect, useMemo, useState } from "react";
 import { Card, Typography, Row, Col, Button, Tag, Space, Alert } from "antd";
@@ -110,7 +110,7 @@ export default function MembershipPage() {
     if (status === "success" && plan) {
       setMembershipTier(plan);
       setIsPremium(plan !== "free");
-      toast.success("Ödeme başarılı. Üyeliğin güncellendi.");
+      toast.success("Ödeme başarılı. Üçyelişin güncellendi.");
     }
 
     if (status === "cancel") {
@@ -163,7 +163,7 @@ export default function MembershipPage() {
           <Space orientation="vertical" size={4}>
             <Title level={3} style={{ color: "#fff", margin: 0 }}>
               <CrownOutlined style={{ color: "#f59e0b", marginRight: 8 }} />
-              Üyelik Planları
+              Üçyelik Planları
             </Title>
             <Text style={{ color: "rgba(255,255,255,0.5)" }}>
               Bronze, Gold veya Diamond paketlerinden birini seç.
@@ -195,7 +195,7 @@ export default function MembershipPage() {
                 <Card
                   style={{
                     height: "100%",
-                    background: "#1a1a2e",
+                    background: "var(--bg-container)",
                     border: `1px solid ${isCurrent ? plan.accent : "rgba(255,255,255,0.08)"}`,
                     borderRadius: 16,
                     position: "relative",
@@ -270,7 +270,7 @@ export default function MembershipPage() {
         <Card
           style={{
             marginTop: 16,
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
           }}

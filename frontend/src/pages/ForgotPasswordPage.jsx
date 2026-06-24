@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Input, Button, Typography, message } from "antd";
 import { MailOutlined, ArrowLeftOutlined, CheckCircleFilled } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
 import appLogo from "../assets/Gemini_Generated_Image_3hrhw23hrhw23hrh.png";
@@ -14,17 +14,17 @@ const { Title, Text } = Typography;
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async () => {
     if (!email) { message.warning("E-posta adresinizi girin."); return; }
     setLoading(true);
     try {
-      await axios.post("http://localhost:8000/api/auth/forgot-password", { email });
-      setSent(true);
-    } catch {
+      await axios.post("/api/auth/forgot-password", { email });
+      navigate("/reset-password?email=" + encodeURIComponent(email));
+    } catch (err) {
       // Güvenlik gereği her durumda başarılı göster
-      setSent(true);
+      navigate("/reset-password?email=" + encodeURIComponent(email));
     } finally {
       setLoading(false);
     }
@@ -60,60 +60,33 @@ export default function ForgotPasswordPage() {
             Şifreni mi unuttun?
           </Title>
           <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 15 }}>
-            {sent
-              ? "Linki e-postana gönderdik"
-              : "E-posta adresini gir, sıfırlama linkini gönderelim"}
+            E-posta adresini gir, sıfırlama kodunu gönderelim
           </Text>
         </div>
 
-        {!sent ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <Input
-              prefix={<MailOutlined style={{ color: "rgba(255,255,255,0.3)" }} />}
-              placeholder="E-posta adresin"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onPressEnter={handleSubmit}
-              style={{
-                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 14, color: "#fff", height: 56, fontSize: 16,
-              }}
-            />
-            <Button
-              type="primary" block loading={loading} onClick={handleSubmit}
-              style={{
-                height: 56, borderRadius: 14, fontWeight: 700, fontSize: 16,
-                background: "linear-gradient(135deg, #7c3aed, #9333ea)", border: "none",
-              }}
-            >
-              Sıfırlama Linki Gönder
-            </Button>
-          </div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <Input
+            prefix={<MailOutlined style={{ color: "rgba(255,255,255,0.3)" }} />}
+            placeholder="E-posta adresin"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onPressEnter={handleSubmit}
             style={{
-              textAlign: "center", padding: "32px 24px",
-              background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)",
-              borderRadius: 20,
+              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 14, color: "#fff", height: 56, fontSize: 16,
+            }}
+          />
+          <Button
+            type="primary" block loading={loading} onClick={handleSubmit}
+            style={{
+              height: 56, borderRadius: 14, fontWeight: 700, fontSize: 16,
+              background: "linear-gradient(135deg, #7c3aed, #9333ea)", border: "none",
             }}
           >
-            <CheckCircleFilled style={{ fontSize: 48, color: "#34d399", marginBottom: 16 }} />
-            <Title level={4} style={{ color: "#fff", marginBottom: 8 }}>E-posta Gönderildi!</Title>
-            <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 14, lineHeight: 1.7 }}>
-              <strong style={{ color: "#a78bfa" }}>{email}</strong> adresine sıfırlama linki gönderdik.
-              Gelen kutunu kontrol et. Spam klasörüne de bakabilirsin.
-            </Text>
-            <div style={{ marginTop: 20 }}>
-              <Button onClick={() => setSent(false)}
-                style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", background: "transparent", borderRadius: 10 }}>
-                Farklı e-posta dene
-              </Button>
-            </div>
-          </motion.div>
-        )}
+            Sıfırlama Kodu Gönder
+          </Button>
+        </div>
 
         <div style={{ textAlign: "center", marginTop: 28 }}>
           <Link to="/login" style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, display: "inline-flex", alignItems: "center", gap: 6 }}>

@@ -64,26 +64,41 @@ const DEMO_USERS = [];
 /**
  * Backend'den gelen post verisini frontend formatına dönüştür
  */
-const mapBackendPost = (post) => ({
-  id: post.id,
-  user: {
-    id: String(post.user_id),
-    name: post.user_name || "Anonim",
-    avatar: null,
-  },
-  content: post.content,
-  image: post.image_url || null,
-  calories: null,
-  macros: null,
-  isLiked: post.is_liked || false,
-  likeCount: Number(post.like_count) || 0,
-  isSupported: post.is_supported || false,
-  supportCount: Number(post.support_count) || 0,
-  timeAgo: formatTimeAgo(post.created_at),
-  comments: [],
-  coachComment: null,
-  metadata: null,
-});
+const mapBackendPost = (post) => {
+  let metadata = null;
+  let coachComment = null;
+  if (post.metadata) {
+    try {
+      metadata = typeof post.metadata === 'string' ? JSON.parse(post.metadata) : post.metadata;
+      if (metadata && metadata.coachComment) {
+        coachComment = metadata.coachComment;
+      }
+    } catch (e) {
+      console.error("Error parsing post metadata", e);
+    }
+  }
+
+  return {
+    id: post.id,
+    user: {
+      id: String(post.user_id),
+      name: post.user_name || "Anonim",
+      avatar: post.user_avatar ? `http://localhost:8000${post.user_avatar}` : null,
+    },
+    content: post.content,
+    image: post.image_url ? (post.image_url.startsWith('http') ? post.image_url : `http://localhost:8000${post.image_url}`) : null,
+    calories: null,
+    macros: null,
+    isLiked: post.is_liked || false,
+    likeCount: Number(post.like_count) || 0,
+    isSupported: post.is_supported || false,
+    supportCount: Number(post.support_count) || 0,
+    timeAgo: formatTimeAgo(post.created_at),
+    comments: [],
+    coachComment: coachComment,
+    metadata: metadata,
+  };
+};
 
 const formatTimeAgo = (dateStr) => {
   if (!dateStr) return "";
@@ -178,7 +193,7 @@ export default function FeedPage() {
                 user: {
                   id: String(c.user_id),
                   name: c.user_name || "Kullanıcı",
-                  avatar: null,
+                  avatar: c.user_avatar ? `http://localhost:8000${c.user_avatar}` : null,
                 },
                 timeAgo: formatTimeAgo(c.created_at),
                 createdAt: c.created_at,
@@ -214,7 +229,7 @@ export default function FeedPage() {
             }
           });
         }
-        // Local state'e yaz — filter anında geçerli olsun
+        // Local state'e yaz  filter anında geçerli olsun
         setBackendFriendIds(friendProfiles.map((p) => p.id));
       } catch {
         // sessizce devam; store'daki mevcut friendIds kullanılır
@@ -471,44 +486,65 @@ export default function FeedPage() {
   const publishPost = async (payload, options = {}) => {
     const { ensureVisibleInFeed = false } = options;
 
+    let createdPost = null;
+
     if (ensureVisibleInFeed) {
       createLocalPost(payload);
       try {
-        await feedService.createPost(payload);
+        const res = await feedService.createPost(payload);
+        createdPost = res?.data?.post || res?.data;
       } catch {
         toast.info("Sunucuya erişilemedi, gönderi yerelde kaydedildi.");
       }
-      return;
+    } else {
+      try {
+        const res = await createPost.mutateAsync(payload);
+        createdPost = res?.data?.post || res?.data;
+      } catch {
+        createLocalPost(payload);
+        toast.info("Sunucuya erişilemedi, gönderi yerelde kaydedildi.");
+      }
     }
 
-    try {
-      await createPost.mutateAsync(payload);
-    } catch {
-      createLocalPost(payload);
-      toast.info("Sunucuya erişilemedi, gönderi yerelde kaydedildi.");
+    // AI Koç yorumunu tetikle (Eğer resim varsa)
+    if (createdPost && createdPost.id && (payload.photo_base64 || payload.image_url)) {
+      const imgUrlForAi = createdPost.image_url;
+      if (imgUrlForAi) {
+        toast.info("Koç fotoğrafını inceliyor...");
+        aiService.generateCoachCommentForFeed(createdPost.id, imgUrlForAi, coachPersona)
+          .then(() => {
+            // Yorum eklendikten sonra feed'i güncelle
+            queryClient.invalidateQueries({ queryKey: ["feed"] });
+          })
+          .catch((err) => {
+             console.error("AI yorum üretemedi", err);
+          });
+      }
     }
+
+    return createdPost;
   };
 
   const handleSubmit = async (data) => {
     const baseContent = data.content?.trim();
 
     if (data.mode === "photo" && data.image) {
-      let imageUrl = data.imagePreview || null;
-
+      // Dosyayı base64'e çevir
+      let base64Image = null;
       try {
-        const uploadRes = await uploadImage.mutateAsync(data.image);
-        imageUrl =
-          uploadRes?.data?.url ||
-          uploadRes?.data?.imageUrl ||
-          uploadRes?.data?.path ||
-          imageUrl;
-      } catch {
-        // Upload opsiyonel: analiz sonucu yine paylaşılabilsin
+        base64Image = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(data.image);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+        });
+      } catch (err) {
+        console.error("Fotoğraf dönüştürme hatası:", err);
       }
 
       let analyzedData = {};
       try {
-        const analysisRes = await analyzeFoodImage.mutateAsync(data.image);
+        const analysisRes = await analyzeFoodImage.mutateAsync(base64Image);
         analyzedData = analysisRes?.data || {};
       } catch {
         analyzedData = {};
@@ -516,15 +552,12 @@ export default function FeedPage() {
 
       const calories = analyzedData.calories ?? null;
       const macros = analyzedData.macros || null;
-      const suggestedText =
-        analyzedData.summary || analyzedData.foodName || analyzedData.food_name;
-
       await publishPost({
-        content:
-          baseContent ||
-          suggestedText ||
-          "Fotoğraftan besin analizi paylaşıldı 📸",
-        image: imageUrl,
+        content: baseContent || "",
+        photo_base64: base64Image,
+        image: data.imagePreview || base64Image,
+        image_url: null, // Sunucuya gereksiz base64 göndermemek için
+        visibility: data.visibility || "public",
         calories,
         macros,
         metadata: {
@@ -546,6 +579,7 @@ export default function FeedPage() {
 
     await publishPost({
       content: baseContent,
+      visibility: data.visibility || "public",
     });
 
     pushNotification({
@@ -863,8 +897,8 @@ export default function FeedPage() {
         activeKey={activeTab}
         onChange={handleTabChange}
         items={[
-          { key: "feed", label: "🏠 Akış" },
-          { key: "discover", label: "🔍 Keşfet" },
+          { key: "feed", label: " Akış" },
+          { key: "discover", label: " Keşfet" },
         ]}
         style={{ marginBottom: 16 }}
       />
@@ -884,7 +918,7 @@ export default function FeedPage() {
           {feedPosts.length === 0 ? (
             <Card
               style={{
-                background: "#1a1a2e",
+                background: "var(--bg-container)",
                 border: "1px solid rgba(255,255,255,0.06)",
                 borderRadius: 16,
                 marginTop: 8,
@@ -967,7 +1001,7 @@ export default function FeedPage() {
             <Card
               style={{
                 marginBottom: 16,
-                background: "#1a1a2e",
+                background: "var(--bg-container)",
                 border: "1px solid rgba(124,58,237,0.12)",
                 borderRadius: 16,
               }}
@@ -1029,7 +1063,7 @@ export default function FeedPage() {
           {discoverPosts.length === 0 ? (
             <Card
               style={{
-                background: "#1a1a2e",
+                background: "var(--bg-container)",
                 border: "1px solid rgba(255,255,255,0.06)",
                 borderRadius: 16,
               }}

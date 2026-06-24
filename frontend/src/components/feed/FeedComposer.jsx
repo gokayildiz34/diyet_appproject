@@ -1,10 +1,10 @@
 /**
  * FitPlate - Feed Composer Bileşeni
  * Çoklu giriş modu: yazı, fotoğraf, sesli komut
- * Hibrit beslenme veri girişi — kullanıcı seçtiği yöntemle yemeğini paylaşır
+ * Hibrit beslenme veri girişi  kullanıcı seçtiği yöntemle yemeğini paylaşır
  */
 import { useState, useCallback, useEffect } from "react";
-import { Card, Input, Button, Segmented, Typography } from "antd";
+import { Card, Input, Select, Button, Segmented, Typography } from "antd";
 import {
   CameraOutlined,
   EditOutlined,
@@ -12,6 +12,8 @@ import {
   SendOutlined,
   PictureOutlined,
   CloseOutlined,
+  GlobalOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,6 +26,7 @@ export default function FeedComposer({ onSubmit, isLoading }) {
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [visibility, setVisibility] = useState("public");
 
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
@@ -52,7 +55,7 @@ export default function FeedComposer({ onSubmit, isLoading }) {
 
   const handleSubmit = async () => {
     if (!content.trim() && !imageFile) return;
-    await onSubmit?.({ content, image: imageFile, imagePreview, mode });
+    await onSubmit?.({ content, image: imageFile, imagePreview, mode, visibility });
     if (imagePreview) URL.revokeObjectURL(imagePreview);
     setContent("");
     setImageFile(null);
@@ -76,7 +79,7 @@ export default function FeedComposer({ onSubmit, isLoading }) {
     <Card
       style={{
         marginBottom: 20,
-        background: "linear-gradient(135deg, #1a1a2e 0%, #1e1b3a 100%)",
+        background: "linear-gradient(135deg, var(--bg-container) 0%, #1e1b3a 100%)",
         border: "1px solid rgba(124, 58, 237, 0.12)",
         borderRadius: 16,
       }}
@@ -125,7 +128,7 @@ export default function FeedComposer({ onSubmit, isLoading }) {
                 marginTop: 6,
               }}
             >
-              Yemeğini yaz, biz kalori ve besin değerlerini hesaplayalım ✨
+              Yemeğini yaz, biz kalori ve besin değerlerini hesaplayalım Üç
             </Text>
           </motion.div>
         )}
@@ -211,18 +214,40 @@ export default function FeedComposer({ onSubmit, isLoading }) {
         )}
       </AnimatePresence>
 
-      {/* Gönder Butonu */}
+      {/* Gönder Butonu ve Gizlilik Seçimi */}
       <div
-        style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}
       >
+        <Select
+          value={visibility}
+          onChange={setVisibility}
+          style={{ width: 180 }}
+          options={[
+            {
+              value: "public",
+              label: (
+                <span>
+                  <GlobalOutlined style={{ marginRight: 6 }} /> Herkese Açık
+                </span>
+              ),
+            },
+            {
+              value: "friends",
+              label: (
+                <span>
+                  <TeamOutlined style={{ marginRight: 6 }} /> Sadece Arkadaşlar
+                </span>
+              ),
+            },
+          ]}
+        />
         <Button
           type="primary"
           icon={<SendOutlined />}
           onClick={handleSubmit}
           loading={isLoading}
           disabled={!content.trim() && !imageFile}
-          size="large"
-          style={{ borderRadius: 10 }}
+          style={{ borderRadius: 10, padding: "0 24px", height: 38 }}
         >
           Paylaş
         </Button>

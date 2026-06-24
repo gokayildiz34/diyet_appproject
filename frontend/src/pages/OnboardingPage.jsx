@@ -79,7 +79,7 @@ export default function OnboardingPage() {
         alignItems: "center",
         justifyContent: "center",
         background:
-          "linear-gradient(145deg, #0f0f1a 0%, #1a1025 50%, #0f0f1a 100%)",
+          "linear-gradient(145deg, var(--bg-primary) 0%, #1a1025 50%, var(--bg-primary) 100%)",
         padding: 24,
       }}
     >
@@ -148,7 +148,7 @@ export default function OnboardingPage() {
                         background:
                           selectedCoach === coach.key
                             ? coach.bgColor
-                            : "#1a1a2e",
+                            : "var(--bg-container)",
                         border: `2px solid ${
                           selectedCoach === coach.key
                             ? coach.borderColor
@@ -246,7 +246,7 @@ export default function OnboardingPage() {
             >
               <Card
                 style={{
-                  background: "#1a1a2e",
+                  background: "var(--bg-container)",
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 16,
                   textAlign: "center",
@@ -254,7 +254,7 @@ export default function OnboardingPage() {
                 styles={{ body: { padding: 40 } }}
               >
                 <Title level={4} style={{ color: "#fff" }}>
-                  🎯 Günlük Kalori Hedefiniz
+                   Günlük Kalori Hedefiniz
                 </Title>
                 <Paragraph
                   style={{ color: "rgba(255,255,255,0.45)", fontSize: 14 }}

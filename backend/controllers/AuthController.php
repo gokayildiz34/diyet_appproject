@@ -29,7 +29,7 @@ class AuthController
     {
         $this->db        = $db;
         $this->userModel = new User($db);
-        $this->jwtSecret = getenv('JWT_SECRET') ?: 'default-secret-change-me';
+        $this->jwtSecret = $_ENV['JWT_SECRET'] ?? 'super_secret_diet_app_jwt_key_2026';
         $this->mailer    = new ResendMailer();
     }
 
@@ -68,16 +68,57 @@ class AuthController
             'password' => $password,
         ]);
 
-        $token = JWTHelper::encode(['user_id' => $user['id']], $this->jwtSecret);
+        $verificationCode = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+        $this->userModel->setVerificationToken($user['id'], $verificationCode);
 
-        // Hoş geldiniz maili gönder (arka planda, hata olsa bile kayıt başarılı)
+        // Doğrulama maili gönder (arka planda, hata olsa bile kayıt başarılı)
         try {
-            $this->mailer->sendWelcome($email, $name);
+            $this->mailer->sendVerificationCode($email, $name, $verificationCode);
         } catch (\Throwable $e) {
             // Mail hatası kayıt işlemini engellemesin
         }
 
-        ResponseHelper::success(['user' => $user, 'token' => $token], 201);
+        ResponseHelper::success([
+            'message' => 'Kayıt başarılı. Lütfen e-postanıza gönderilen 6 haneli doğrulama kodunu giriniz.',
+            'email' => $email
+        ], 201);
+    }
+
+    /**
+     * POST /api/auth/verify-email
+     * 6 haneli OTP kodu ile e-postayı doğrular.
+     */
+    public function verifyEmail(array $payload): void
+    {
+        $code = trim((string) ($payload['code'] ?? ''));
+
+        if ($code === '' || strlen($code) !== 6) {
+            ResponseHelper::error('Lütfen 6 haneli doğrulama kodunu girin.', 422);
+            return;
+        }
+
+        $user = $this->userModel->findByVerificationToken($code);
+
+        if (!$user) {
+            ResponseHelper::error('Geçersiz doğrulama kodu. Lütfen tekrar deneyin.', 404);
+            return;
+        }
+
+        // Email doğrulandı olarak işaretle
+        $this->userModel->verifyEmail($user['id']);
+
+        // Kullanıcı giriş yapmış gibi token dön (UX için iyi)
+        $token = JWTHelper::encode(['user_id' => $user['id']], $this->jwtSecret);
+
+        // Şifre vb. gizle
+        unset($user['password_hash']);
+        unset($user['verification_token']);
+
+        ResponseHelper::success([
+            'message' => 'E-posta adresiniz başarıyla doğrulandı!',
+            'user' => $user,
+            'token' => $token
+        ]);
     }
 
     /**
@@ -97,6 +138,17 @@ class AuthController
 
         if ($user === null || !password_verify($password, $user['password_hash'])) {
             ResponseHelper::error('E-posta veya şifre hatalı.', 401);
+            return;
+        }
+
+        if (empty($user['email_verified_at'])) {
+            $verificationCode = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $this->userModel->setVerificationToken($user['id'], $verificationCode);
+            try {
+                $this->mailer->sendVerificationCode($email, $user['name'], $verificationCode);
+            } catch (\Throwable $e) {}
+
+            ResponseHelper::error('Hesabınız doğrulanmamış. Yeni bir doğrulama kodu e-posta adresinize gönderildi. Lütfen doğrulama işlemini tamamlayın.', 403);
             return;
         }
 
@@ -131,14 +183,37 @@ class AuthController
     public function updateProfile(array $payload): void
     {
         $userId = AuthMiddleware::authenticate();
-        $user = $this->userModel->update($userId, $payload);
 
-        if ($user === null) {
-            ResponseHelper::error('Kullanıcı bulunamadı.', 404);
-            return;
+        // Profil fotoğrafı base64 olarak geldiyse
+        if (!empty($payload['photo_base64'])) {
+            try {
+                $imgData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $payload['photo_base64']));
+                $uploadDir = __DIR__ . '/../public/uploads/';
+                if (!file_exists($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $fileName = 'avatar_' . $userId . '_' . time() . '.jpg';
+                file_put_contents($uploadDir . $fileName, $imgData);
+                $payload['profile_photo'] = '/uploads/' . $fileName;
+            } catch (Exception $e) {
+                // Hata durumunda yoksay
+            }
         }
 
-        ResponseHelper::success(['user' => $user]);
+        try {
+            $user = $this->userModel->update($userId, $payload);
+            if ($user === null) {
+                ResponseHelper::error('Kullanıcı bulunamadı.', 404);
+                return;
+            }
+            ResponseHelper::success(['user' => $user]);
+        } catch (PDOException $e) {
+            if (strpos($e->getMessage(), 'Duplicate entry') !== false && strpos($e->getMessage(), 'kullanici_adi') !== false) {
+                ResponseHelper::error('Bu kullanıcı adı zaten alınmış. Lütfen başka bir kullanıcı adı seçin.', 409);
+            } else {
+                ResponseHelper::error('Profil güncellenirken bir hata oluştu.', 500);
+            }
+        }
     }
 
     /**
@@ -200,25 +275,22 @@ class AuthController
         $stmt = $this->db->prepare('DELETE FROM password_reset_tokens WHERE email = ?');
         $stmt->execute([$email]);
 
-        // Yeni token oluştur
-        $token     = bin2hex(random_bytes(32));
+        // Yeni 6 haneli kod oluştur
+        $code = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
         $expiresAt = date('Y-m-d H:i:s', time() + 3600); // 1 saat
 
         $stmt = $this->db->prepare(
             'INSERT INTO password_reset_tokens (email, token, expires_at) VALUES (?, ?, ?)'
         );
-        $stmt->execute([$email, $token, $expiresAt]);
-
-        $frontendUrl = getenv('FRONTEND_BASE_URL') ?: 'http://localhost:5173';
-        $resetLink   = $frontendUrl . '/reset-password?token=' . $token;
+        $stmt->execute([$email, $code, $expiresAt]);
 
         try {
-            $this->mailer->sendPasswordReset($email, $user['name'], $resetLink);
+            $this->mailer->sendPasswordResetCode($email, $user['name'], $code);
         } catch (\Throwable $e) {
             // Mail servisi çalışmıyor olsa bile token oluşturuldu
         }
 
-        ResponseHelper::success(['message' => 'Şifre sıfırlama linki e-posta adresinize gönderildi.']);
+        ResponseHelper::success(['message' => 'Şifre sıfırlama kodu e-posta adresinize gönderildi.']);
     }
 
     /**
@@ -231,7 +303,7 @@ class AuthController
         $newPassword = (string) ($payload['password'] ?? '');
 
         if ($token === '' || strlen($newPassword) < 6) {
-            ResponseHelper::error('Geçersiz istek. Şifre en az 6 karakter olmalıdır.', 422);
+            ResponseHelper::error('Eksik bilgi. Lütfen 6 haneli kodu ve en az 6 karakterli yeni şifrenizi girin.', 422);
             return;
         }
 
@@ -242,12 +314,12 @@ class AuthController
         $row = $stmt->fetch();
 
         if (!$row) {
-            ResponseHelper::error('Geçersiz veya kullanılmış sıfırlama linki.', 404);
+            ResponseHelper::error('Geçersiz veya süresi dolmuş doğrulama kodu.', 404);
             return;
         }
 
         if (new \DateTime() > new \DateTime($row['expires_at'])) {
-            ResponseHelper::error('Sıfırlama linki süresi dolmuş. Lütfen tekrar talep edin.', 410);
+            ResponseHelper::error('Doğrulama kodunun süresi dolmuş. Lütfen tekrar talep edin.', 410);
             return;
         }
 

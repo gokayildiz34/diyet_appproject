@@ -213,7 +213,7 @@ export default function NotificationsPage() {
         {filteredItems.length === 0 ? (
           <Card
             style={{
-              background: "#1a1a2e",
+              background: "var(--bg-container)",
               border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: 16,
             }}
@@ -237,7 +237,7 @@ export default function NotificationsPage() {
               <Card
                 style={{
                   marginBottom: 12,
-                  background: item.read ? "#1a1a2e" : "#1b1a34",
+                  background: item.read ? "var(--bg-container)" : "#1b1a34",
                   border: item.read
                     ? "1px solid rgba(255,255,255,0.06)"
                     : "1px solid rgba(124,58,237,0.35)",

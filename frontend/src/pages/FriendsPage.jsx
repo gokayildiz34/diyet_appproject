@@ -3,6 +3,8 @@
  * Facebook-inspired friendship management interface
  */
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { Select, Avatar, Spin } from "antd";
+import { UserOutlined } from "@ant-design/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { friendService } from "../services/friendService";
@@ -153,9 +155,11 @@ export default function FriendsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [addFriendId, setAddFriendId] = useState("");
+  const [addFriendId, setAddFriendId] = useState(null);
   const [sendingRequest, setSendingRequest] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
+  const [searchUsersList, setSearchUsersList] = useState([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -224,17 +228,33 @@ export default function FriendsPage() {
     });
   };
 
+  const handleSearchUsers = async (value) => {
+    if (!value || value.trim().length < 2) {
+      setSearchUsersList([]);
+      return;
+    }
+    setSearchingUsers(true);
+    try {
+      const res = await friendService.searchUsers(value);
+      setSearchUsersList(res.data?.users || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
   const handleSendRequest = async () => {
-    const id = parseInt(addFriendId, 10);
-    if (!id || id <= 0) {
-      toast.warn("Geçerli bir kullanıcı ID girin.");
+    if (!addFriendId) {
+      toast.warn("Lütfen bir kullanıcı seçin.");
       return;
     }
     setSendingRequest(true);
     try {
-      await friendService.sendRequest(id);
+      await friendService.sendRequest(addFriendId);
       toast.success("Arkadaşlık isteği gönderildi!");
-      setAddFriendId("");
+      setAddFriendId(null);
+      setSearchUsersList([]);
       await fetchAll();
       setActiveTab("sent");
     } catch (err) {
@@ -544,16 +564,34 @@ export default function FriendsPage() {
                   <span className="title-icon">👋</span>
                   Arkadaşlık İsteği Gönder
                 </div>
-                <div className="add-friend-form">
-                  <input
-                    type="number"
-                    placeholder="Kullanıcı ID girin..."
+                <div className="add-friend-form" style={{ display: 'flex', gap: 10, background: 'none', padding: 0 }}>
+                  <Select
+                    showSearch
+                    placeholder="Kullanıcı adına göre ara..."
+                    style={{ flex: 1 }}
+                    size="large"
+                    defaultActiveFirstOption={false}
+                    filterOption={false}
+                    onSearch={handleSearchUsers}
+                    onChange={setAddFriendId}
                     value={addFriendId}
-                    onChange={(e) => setAddFriendId(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSendRequest();
-                    }}
-                    min="1"
+                    notFoundContent={searchingUsers ? <Spin size="small" /> : "Kullanıcı bulunamadı."}
+                    options={searchUsersList.map((d) => ({
+                      value: d.id,
+                      label: (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <Avatar 
+                            src={d.profile_photo ? `http://localhost:8000${d.profile_photo.startsWith('/') ? '' : '/'}${d.profile_photo}` : null}
+                            icon={!d.profile_photo && <UserOutlined />}
+                            size="small"
+                          />
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ lineHeight: '1.2' }}>{d.name}</span>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>@{d.username}</span>
+                          </div>
+                        </div>
+                      ),
+                    }))}
                   />
                   <button
                     onClick={handleSendRequest}

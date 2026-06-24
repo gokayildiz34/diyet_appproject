@@ -22,7 +22,9 @@ export const feedService = {
     const response = await api.post("/feed", {
       content: data.content,
       image_url: data.image || data.image_url || null,
+      photo_base64: data.photo_base64 || null,
       type: data.type || "text",
+      visibility: data.visibility || "public",
     });
     return response;
   },

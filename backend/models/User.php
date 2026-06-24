@@ -30,6 +30,7 @@ class User
         'id'                    => 'id',
         'ad'                    => 'name',
         'eposta'                => 'email',
+        'kullanici_adi'         => 'username',
         'sifre_hash'            => 'password_hash',
         'koc_tipi'              => 'coach_persona',
         'gunluk_kalori_hedefi'  => 'daily_calorie_goal',
@@ -44,6 +45,8 @@ class User
         'kilo_kg'               => 'weight',
         'hedef_kilo_kg'         => 'target_weight',
         'aktivite_seviyesi'     => 'activity_level',
+        'email_verified_at'     => 'email_verified_at',
+        'verification_token'    => 'verification_token',
         'olusturulma_tarihi'    => 'created_at',
         'guncelleme_tarihi'     => 'updated_at',
     ];
@@ -54,6 +57,7 @@ class User
     private array $apiToColumn = [
         'name'                 => 'ad',
         'email'                => 'eposta',
+        'username'             => 'kullanici_adi',
         'password_hash'        => 'sifre_hash',
         'coach_persona'        => 'koc_tipi',
         'daily_calorie_goal'   => 'gunluk_kalori_hedefi',
@@ -68,6 +72,8 @@ class User
         'weight'               => 'kilo_kg',
         'target_weight'        => 'hedef_kilo_kg',
         'activity_level'       => 'aktivite_seviyesi',
+        'email_verified_at'    => 'email_verified_at',
+        'verification_token'   => 'verification_token',
     ];
 
     /**
@@ -119,14 +125,22 @@ class User
     {
         $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT, ['cost' => 12]);
 
-        $stmt = $this->db->prepare(
-            "INSERT INTO {$this->table} (ad, eposta, sifre_hash) VALUES (:ad, :eposta, :sifre_hash)"
-        );
+        $username = $data['username'] ?? '';
+        if (empty($username)) {
+            $base = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $data['name']));
+            if (empty($base)) $base = 'user';
+            $username = $base . '_' . mt_rand(1000, 9999);
+        }
 
+        $sql = "INSERT INTO {$this->table} (ad, eposta, kullanici_adi, sifre_hash)
+                VALUES (:ad, :eposta, :kullanici_adi, :sifre_hash)";
+        
+        $stmt = $this->db->prepare($sql);
         $stmt->execute([
             'ad'         => $data['name'],
-            'eposta'     => $data['email'],
-            'sifre_hash' => $passwordHash,
+            'eposta'        => $data['email'],
+            'kullanici_adi' => $username,
+            'sifre_hash'    => $passwordHash,
         ]);
 
         $userId = (int) $this->db->lastInsertId();
@@ -148,10 +162,30 @@ class User
     /**
      * Kullanıcı profilini güncelle
      */
+    public function setVerificationToken(int $id, string $token): bool
+    {
+        $stmt = $this->db->prepare('UPDATE ' . $this->table . ' SET verification_token = :token WHERE id = :id');
+        return $stmt->execute(['token' => $token, 'id' => $id]);
+    }
+
+    public function verifyEmail(int $id): bool
+    {
+        $stmt = $this->db->prepare('UPDATE ' . $this->table . ' SET email_verified_at = NOW(), verification_token = NULL WHERE id = :id');
+        return $stmt->execute(['id' => $id]);
+    }
+
+    public function findByVerificationToken(string $token): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM ' . $this->table . ' WHERE verification_token = :token LIMIT 1');
+        $stmt->execute(['token' => $token]);
+        $row = $stmt->fetch();
+        return $row ? $this->mapToApi($row) : null;
+    }
+
     public function update(int $id, array $data): ?array
     {
         $allowedApiFields = [
-            'name', 'coach_persona', 'daily_calorie_goal', 'onboarding_completed',
+            'name', 'username', 'coach_persona', 'daily_calorie_goal', 'onboarding_completed',
             'membership_tier', 'profile_photo', 'bio',
             'goal', 'gender', 'age', 'height', 'weight', 'target_weight', 'activity_level',
         ];
@@ -246,9 +280,9 @@ class User
     public function search(string $query, int $excludeUserId = 0, int $limit = 20): array
     {
         $likeQuery = '%' . $query . '%';
-        $sql = "SELECT id, ad AS name, eposta AS email, koc_tipi AS coach_persona
+        $sql = "SELECT id, ad AS name, eposta AS email, kullanici_adi AS username, koc_tipi AS coach_persona, profil_foto AS profile_photo
                 FROM {$this->table}
-                WHERE (ad LIKE :q1 OR eposta LIKE :q2)";
+                WHERE (ad LIKE :q1 OR kullanici_adi LIKE :q2)";
 
         if ($excludeUserId > 0) {
             $sql .= " AND id != :exclude";

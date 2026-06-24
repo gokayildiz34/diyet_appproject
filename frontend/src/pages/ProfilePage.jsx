@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Card,
   Avatar,
@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useUserStore } from "../stores/useUserStore";
 import { useFeedStore } from "../stores/useFeedStore";
+import { dietPlanService } from "../services/dietPlanService";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -104,6 +105,29 @@ export default function ProfilePage() {
     [posts, currentUserId],
   );
 
+  const [latestPlan, setLatestPlan] = useState(null);
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        console.log("Fetching latest diet plan...");
+        const res = await dietPlanService.getLatest();
+        console.log("Latest diet plan response:", res.data);
+        if (res.data?.plan) {
+          console.log("Setting latest plan:", res.data.plan);
+          setLatestPlan(res.data.plan);
+        } else if (res.data?.data) {
+          console.log("Setting latest plan from data:", res.data.data);
+          setLatestPlan(res.data.data);
+        } else {
+          console.log("No plan found in response");
+        }
+      } catch (err) {
+        console.error("Error fetching latest plan:", err);
+      }
+    };
+    fetchPlan();
+  }, []);
+
   return (
     <div style={{ maxWidth: 640, margin: "0 auto" }}>
       <motion.div
@@ -134,7 +158,8 @@ export default function ProfilePage() {
           <div style={{ padding: "0 28px 28px", marginTop: -36 }}>
             <Avatar
               size={72}
-              icon={<UserOutlined />}
+              src={user?.profile_photo ? `http://localhost:8000${user.profile_photo}` : null}
+              icon={!user?.profile_photo && <UserOutlined />}
               style={{
                 backgroundColor: "#7c3aed",
                 border: "4px solid #1a1025",
@@ -214,7 +239,7 @@ export default function ProfilePage() {
         {/* İstatistikler */}
         <Card
           style={{
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
             marginBottom: 16,
@@ -294,7 +319,7 @@ export default function ProfilePage() {
         {/* Koç Bilgisi */}
         <Card
           style={{
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
             marginBottom: 16,
@@ -354,7 +379,7 @@ export default function ProfilePage() {
 
         <Card
           style={{
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
           }}
@@ -400,6 +425,70 @@ export default function ProfilePage() {
             </Col>
           </Row>
         </Card>
+
+        {/* Son Diyet Planı */}
+        {latestPlan && (
+          <Card
+            style={{
+              background: "var(--bg-container)",
+              border: "1px solid rgba(124, 58, 237, 0.2)",
+              borderRadius: 16,
+              marginTop: 16,
+            }}
+            styles={{ body: { padding: 24 } }}
+          >
+            <Text
+              strong
+              style={{
+                color: "#a78bfa",
+                fontSize: 12,
+                letterSpacing: 0.5,
+              }}
+            >
+              Üç SON YAPAY ZEKA DİYET PLANIM
+            </Text>
+            <div style={{ marginTop: 16 }}>
+              {latestPlan.meals?.map((meal, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 12,
+                    border: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text strong style={{ color: "#fff", fontSize: 15 }}>
+                      {meal.name}
+                    </Text>
+                    <Tag color="purple" style={{ border: "none", margin: 0 }}>
+                      {meal.targetCalories} kcal
+                    </Tag>
+                  </div>
+                  <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+                    {meal.menu}
+                  </Text>
+                </div>
+              ))}
+              <div style={{ textAlign: "right", marginTop: 16 }}>
+                <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
+                  Toplam Hedef:
+                </Text>
+                <Text strong style={{ color: "#10b981", fontSize: 16, marginLeft: 8 }}>
+                  {latestPlan.total_calories} kcal
+                </Text>
+              </div>
+            </div>
+          </Card>
+        )}
       </motion.div>
     </div>
   );

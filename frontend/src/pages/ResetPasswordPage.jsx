@@ -13,31 +13,29 @@ const { Title, Text } = Typography;
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
+  const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState(false);
+  const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [tokenValid, setTokenValid] = useState(true);
   const navigate = useNavigate();
 
-  const token = searchParams.get("token");
-
-  useEffect(() => {
-    if (!token) setTokenValid(false);
-  }, [token]);
+  const email = searchParams.get("email");
 
   const strength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
   const strengthLabel = ["", "Zayıf", "Orta", "Güçlü"][strength];
   const strengthColor = ["", "#ef4444", "#f59e0b", "#34d399"][strength];
 
   const handleReset = async () => {
+    if (token.length !== 6) { message.warning("Lütfen 6 haneli doğrulama kodunu girin."); return; }
     if (password.length < 6) { message.warning("Şifre en az 6 karakter olmalı."); return; }
     setLoading(true);
     try {
-      await axios.post("http://localhost:8000/api/auth/reset-password", { token, password });
+      await axios.post("/api/auth/reset-password", { token, password });
       setDone(true);
     } catch (err) {
-      const msg = err.response?.data?.message || "Geçersiz veya süresi dolmuş link.";
+      const msg = err.response?.data?.message || "Geçersiz veya süresi dolmuş kod.";
       message.error(msg);
       if (err.response?.status === 404 || err.response?.status === 410) {
         setTokenValid(false);
@@ -89,13 +87,13 @@ export default function ResetPasswordPage() {
             background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 20,
           }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>⏰</div>
-            <Title level={4} style={{ color: "#fff", marginBottom: 8 }}>Link Geçersiz</Title>
+            <Title level={4} style={{ color: "#fff", marginBottom: 8 }}>Kod Geçersiz</Title>
             <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>
-              Sıfırlama linki geçersiz veya süresi dolmuş.
+              Doğrulama kodu geçersiz veya süresi dolmuş.
             </Text>
             <div style={{ marginTop: 20 }}>
               <Link to="/forgot-password">
-                <Button type="primary" style={{ borderRadius: 10 }}>Yeni Link İste</Button>
+                <Button type="primary" style={{ borderRadius: 10 }}>Yeni Kod İste</Button>
               </Link>
             </div>
           </div>
@@ -122,6 +120,25 @@ export default function ResetPasswordPage() {
           </motion.div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <Text style={{ color: "rgba(255,255,255,0.5)" }}>
+                {email ? <><strong style={{ color: "#a78bfa" }}>{email}</strong> adresine gönderilen kodu girin.</> : "E-postanıza gönderilen kodu girin."}
+              </Text>
+            </div>
+            
+            <Input
+              placeholder="6 Haneli Doğrulama Kodu"
+              value={token}
+              maxLength={6}
+              onChange={(e) => setToken(e.target.value.replace(/[^0-9]/g, ""))}
+              style={{
+                ...inputStyle,
+                textAlign: "center",
+                letterSpacing: "4px",
+                fontWeight: "bold",
+                fontSize: 20
+              }}
+            />
             <Input.Password
               prefix={<LockOutlined style={{ color: "rgba(255,255,255,0.3)" }} />}
               placeholder="Yeni şifren (en az 6 karakter)"
@@ -156,7 +173,7 @@ export default function ResetPasswordPage() {
 
             <Button
               type="primary" block loading={loading} onClick={handleReset}
-              disabled={!password || !confirm || password !== confirm}
+              disabled={!token || token.length !== 6 || !password || !confirm || password !== confirm}
               style={{
                 height: 56, borderRadius: 14, fontWeight: 700, fontSize: 16,
                 background: "linear-gradient(135deg, #7c3aed, #9333ea)", border: "none",

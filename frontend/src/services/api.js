@@ -5,11 +5,12 @@
 import axios from "axios";
 import { useAuthStore } from "../stores/useAuthStore";
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = "/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 60000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -22,6 +23,7 @@ api.interceptors.request.use(
     const token = useAuthStore.getState().token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      config.headers['X-Auth-Token'] = `Bearer ${token}`;
     }
     return config;
   },

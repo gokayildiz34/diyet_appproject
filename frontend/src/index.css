@@ -22,20 +22,43 @@
     sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0f0f1a;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* CSS Variables for Dark Mode (Default) */
+  --bg-primary: #0f0f1a;
+  --bg-container: #1a1a2e;
+  --bg-elevated: #16213e;
+  --bg-header: #0f0f1a;
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.04);
+  color-scheme: dark;
+}
+
+body.light-mode {
+  /* CSS Variables for Light Mode */
+  --bg-primary: #f8f9fa;
+  --bg-container: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-header: #ffffff;
+  --text-primary: rgba(0, 0, 0, 0.88);
+  --text-secondary: rgba(0, 0, 0, 0.65);
+  --border-color: #e5e7eb;
+  --border-light: #f3f4f6;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #0f0f1a;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -69,13 +92,16 @@ body {
 
 /* Ant Design Overrides */
 .ant-layout {
-  background: #0f0f1a !important;
+  background: var(--bg-primary) !important;
+  transition: background-color 0.3s ease;
 }
 
 .ant-card {
   transition:
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    background-color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .ant-card:hover {
@@ -89,8 +115,17 @@ body {
 
 /* Smooth transitions globally */
 a,
-button {
-  transition: all 0.2s ease;
+button,
+div,
+span,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
 a {
@@ -105,5 +140,10 @@ a:hover {
 /* Ant Input placeholder color fix */
 .ant-input::placeholder,
 .ant-input-affix-wrapper .ant-input::placeholder {
-  color: rgba(255, 255, 255, 0.25) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Helper Class */
+.border-divider {
+  border-color: var(--border-light) !important;
 }

@@ -105,24 +105,24 @@ const mapBackendCheckin = (item) => ({
   energyScore: Number(item.energy_score || item.enerji_puani) || 5,
   adherenceScore: Number(item.adherence_score || item.uyum_puani) || 50,
   notes: item.notes || item.notlar || "",
-  mood: item.mood || "🙂",
+  mood: item.mood || "😊",
   photoPath: item.photo_path || null,
   aiFeedback: item.ai_feedback || null,
   bicepsCm: item.biceps_cm != null ? Number(item.biceps_cm) : null,
 });
 
 const moods = [
-  { emoji: "😫", label: "Stresli" },
-  { emoji: "😴", label: "Yorgun" },
+  { emoji: "😩", label: "Stresli" },
+  { emoji: "😫", label: "Yorgun" },
   { emoji: "😐", label: "Normal" },
-  { emoji: "🙂", label: "İyi" },
-  { emoji: "😎", label: "Harika" },
+  { emoji: "😊", label: "İyi" },
+  { emoji: "🤩", label: "Harika" },
 ];
 
 export default function WeeklyCheckinPage() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [selectedMood, setSelectedMood] = useState("🙂");
+  const [selectedMood, setSelectedMood] = useState("😊");
   const [photoBase64, setPhotoBase64] = useState(null);
   const [fileList, setFileList] = useState([]);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -221,7 +221,7 @@ export default function WeeklyCheckinPage() {
         energyScore: payload.energy_score,
         adherenceScore: payload.adherence_score,
         bicepsCm: payload.biceps_cm,
-        aiFeedback: "Yerel kayıt tamamlandı. Aktif bir internet bağlantınız olduğunda yapay zeka analiziniz güncellenecektir."
+        aiFeedback: "Yerel kayıt tamamlandı. Aktif bir internet başlantınız olduğunda yapay zeka analiziniz güncellenecektir."
       };
       addWeeklyCheckin(saved);
       toast.success("Haftalık check-in kaydedildi.");
@@ -238,7 +238,7 @@ export default function WeeklyCheckinPage() {
         bicepsCm: payload.biceps_cm,
         notes: payload.notes,
         mood: payload.mood,
-        aiFeedback: "Yerel olarak kaydedildi. Koçunuz diyor ki: İstikrarlı ilerliyorsun, veri bağlantısı kurulunca detaylı analiz alacaksın!"
+        aiFeedback: "Yerel olarak kaydedildi. Koçunuz diyor ki: İstikrarlı ilerliyorsun, veri başlantısı kurulunca detaylı analiz alacaksın!"
       };
       addWeeklyCheckin(mockSaved);
       toast.success("Check-in kaydedildi (yerel).");
@@ -285,7 +285,7 @@ export default function WeeklyCheckinPage() {
           <Card
             style={{
               marginBottom: 16,
-              background: "#1a1a2e",
+              background: "var(--bg-container)",
               border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: 16,
             }}
@@ -298,7 +298,7 @@ export default function WeeklyCheckinPage() {
                   <XAxis dataKey="tarih" stroke="rgba(255,255,255,0.4)" />
                   <YAxis domain={['dataMin - 3', 'dataMax + 3']} stroke="rgba(255,255,255,0.4)" />
                   <Tooltip
-                    contentStyle={{ background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
+                    contentStyle={{ background: "var(--bg-container)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
                     labelStyle={{ color: "#fff" }}
                   />
                   <Line type="monotone" name="Kilo (kg)" dataKey="Kilo" stroke="#a78bfa" strokeWidth={3} activeDot={{ r: 8 }} />
@@ -316,23 +316,23 @@ export default function WeeklyCheckinPage() {
 
         <Row gutter={12} style={{ marginBottom: 16 }}>
           <Col xs={24} md={8}>
-            <Card style={{ background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14 }}>
+            <Card style={{ background: "var(--bg-container)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14 }}>
               <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>Son Kilo</Text>
               <br />
-              <Text strong style={{ color: "#fff", fontSize: 24 }}>{latest ? `${latest.weightKg} kg` : "—"}</Text>
+              <Text strong style={{ color: "#fff", fontSize: 24 }}>{latest ? `${latest.weightKg} kg` : ""}</Text>
             </Card>
           </Col>
           <Col xs={24} md={8}>
-            <Card style={{ background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14 }}>
+            <Card style={{ background: "var(--bg-container)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14 }}>
               <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>Haftalık Değişim</Text>
               <br />
               <Text strong style={{ color: weightDelta <= 0 ? "#34d399" : "#fb7185", fontSize: 24 }}>
-                {latest && previous ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : "—"}
+                {latest && previous ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : ""}
               </Text>
             </Card>
           </Col>
           <Col xs={24} md={8}>
-            <Card style={{ background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14 }}>
+            <Card style={{ background: "var(--bg-container)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14 }}>
               <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>4 Hafta Uyum</Text>
               <br />
               <Text strong style={{ color: "#fff", fontSize: 24 }}>%{avgAdherence4 || 0}</Text>
@@ -382,7 +382,7 @@ export default function WeeklyCheckinPage() {
             <Text style={{ color: "rgba(255,255,255,0.55)" }}>
               Güncel hedef: <b>{dailyCalorieGoal} kcal</b>
               {suggestion.delta !== 0 && (
-                <> • Öneri: <b>{dailyCalorieGoal + suggestion.delta} kcal</b></>
+                <> ⬢ Öneri: <b>{dailyCalorieGoal + suggestion.delta} kcal</b></>
               )}
             </Text>
           </Space>
@@ -392,7 +392,7 @@ export default function WeeklyCheckinPage() {
         <Card
           style={{
             marginBottom: 16,
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
           }}
@@ -520,7 +520,7 @@ export default function WeeklyCheckinPage() {
         {/* Geçmiş Kayıtlar */}
         <Card
           style={{
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
           }}
@@ -551,8 +551,8 @@ export default function WeeklyCheckinPage() {
                       </Space>
                       <br />
                       <Text style={{ color: "rgba(255,255,255,0.65)" }}>
-                        {item.weightKg} kg • {item.waistCm ?? "—"} cm bel
-                        {item.bicepsCm != null ? ` • ${item.bicepsCm} cm biceps` : ""} • {item.sleepHours} saat uyku
+                        {item.weightKg} kg ⬢ {item.waistCm ?? ""} cm bel
+                        {item.bicepsCm != null ? ` ⬢ ${item.bicepsCm} cm biceps` : ""} ⬢ {item.sleepHours} saat uyku
                       </Text>
                       <div style={{ marginTop: 6 }}>
                         <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>Uyum Derecesi</Text>

@@ -23,27 +23,40 @@ class Post
     /**
      * Tüm gönderileri getir (kullanıcı bilgisi, beğeni/destek sayıları ile)
      */
-    public function getAll(int $limit = 50, int $offset = 0): array
+    public function getAll(int $limit = 50, int $offset = 0, int $userId = 0): array
     {
         $sql = "
             SELECT 
                 g.id,
                 g.kullanici_id AS user_id,
                 k.ad AS user_name,
+                k.profil_foto AS user_avatar,
                 g.icerik AS content,
                 g.gorsel_url AS image_url,
                 g.tur AS type,
+                g.gizlilik AS visibility,
                 g.olusturulma_tarihi AS created_at,
+                g.metadata,
                 (SELECT COUNT(*) FROM begeniler b WHERE b.gonderi_id = g.id) AS like_count,
                 (SELECT COUNT(*) FROM destekler d WHERE d.gonderi_id = g.id) AS support_count,
                 (SELECT COUNT(*) FROM yorumlar y WHERE y.gonderi_id = g.id) AS comment_count
             FROM gonderiler g
             JOIN kullanicilar k ON k.id = g.kullanici_id
+            WHERE g.gizlilik = 'public'
+               OR g.kullanici_id = :user_id1
+               OR (g.gizlilik = 'friends' AND (
+                   g.kullanici_id IN (SELECT alici_id FROM arkadasliklar WHERE isteyen_id = :user_id2 AND durum = 'kabul_edildi')
+                   OR 
+                   g.kullanici_id IN (SELECT isteyen_id FROM arkadasliklar WHERE alici_id = :user_id3 AND durum = 'kabul_edildi')
+               ))
             ORDER BY g.olusturulma_tarihi DESC
             LIMIT :limit OFFSET :offset
         ";
 
         $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':user_id1', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':user_id2', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':user_id3', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -61,9 +74,11 @@ class Post
                 g.id,
                 g.kullanici_id AS user_id,
                 k.ad AS user_name,
+                k.profil_foto AS user_avatar,
                 g.icerik AS content,
                 g.gorsel_url AS image_url,
                 g.tur AS type,
+                g.metadata,
                 g.olusturulma_tarihi AS created_at,
                 (SELECT COUNT(*) FROM begeniler b WHERE b.gonderi_id = g.id) AS like_count,
                 (SELECT COUNT(*) FROM destekler d WHERE d.gonderi_id = g.id) AS support_count,
@@ -87,8 +102,8 @@ class Post
     public function create(int $userId, array $data): array
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO gonderiler (kullanici_id, icerik, gorsel_url, tur)
-             VALUES (:kullanici_id, :icerik, :gorsel_url, :tur)"
+            "INSERT INTO gonderiler (kullanici_id, icerik, gorsel_url, tur, gizlilik)
+             VALUES (:kullanici_id, :icerik, :gorsel_url, :tur, :gizlilik)"
         );
 
         $stmt->execute([
@@ -96,10 +111,24 @@ class Post
             'icerik'       => $data['content'],
             'gorsel_url'   => $data['image_url'] ?? null,
             'tur'          => $data['type'] ?? 'text',
+            'gizlilik'     => $data['visibility'] ?? 'public',
         ]);
 
         $postId = (int) $this->db->lastInsertId();
         return $this->getById($postId);
+    }
+
+    /**
+     * Gönderinin metadata JSON'unu günceller
+     */
+    public function updateMetadata(int $postId, array $metadata): bool
+    {
+        $stmt = $this->db->prepare("UPDATE gonderiler SET metadata = :metadata WHERE id = :id");
+        $stmt->execute([
+            'metadata' => json_encode($metadata),
+            'id' => $postId
+        ]);
+        return $stmt->rowCount() > 0;
     }
 
     /**
@@ -222,6 +251,7 @@ class Post
                 y.id,
                 y.kullanici_id AS user_id,
                 k.ad AS user_name,
+                k.profil_foto AS user_avatar,
                 y.icerik AS content,
                 y.olusturulma_tarihi AS created_at
             FROM yorumlar y
@@ -256,7 +286,7 @@ class Post
 
         // Eklenen yorumu geri dön
         $stmt = $this->db->prepare(
-            "SELECT y.id, y.kullanici_id AS user_id, k.ad AS user_name, 
+            "SELECT y.id, y.kullanici_id AS user_id, k.ad AS user_name, k.profil_foto AS user_avatar, 
                     y.icerik AS content, y.olusturulma_tarihi AS created_at
              FROM yorumlar y
              JOIN kullanicilar k ON k.id = y.kullanici_id

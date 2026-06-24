@@ -2,7 +2,7 @@
  * FitPlate - İstatistikler Sayfası
  * Kalori, makro ve ilerleme takibi
  */
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, Typography, Row, Col, Progress, Space, Tag, Button } from "antd";
 import {
   BarChartOutlined,
@@ -11,19 +11,43 @@ import {
   CalendarOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
+import axios from "axios";
+import { useAuthStore } from "../stores/useAuthStore";
 import { useUserStore } from "../stores/useUserStore";
 import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
 
 const DAY_LABELS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+const API = "/api";
+
 
 export default function StatsPage() {
   const navigate = useNavigate();
+  const token = useAuthStore((s) => s.token);
   const { dailyCalorieGoal, dailyCaloriesConsumed, weeklyCheckins } =
     useUserStore();
 
-  // Check-in verilerinden son 7 günlük veriyi hesapla
+  const [actualWeeklyData, setActualWeeklyData] = useState({});
+
+  useEffect(() => {
+    const fetchWeekly = async () => {
+      try {
+        const from = (() => {
+          const d = new Date(); d.setDate(d.getDate() - 6);
+          return d.toISOString().slice(0, 10);
+        })();
+        const headers = { Authorization: `Bearer ${token}` };
+        const { data } = await axios.get(`${API}/food-log/weekly?from=${from}`, { headers });
+        setActualWeeklyData(data.summary || {});
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    if (token) fetchWeekly();
+  }, [token]);
+
+  // Gerçek verilerden son 7 günlük veriyi hesapla
   const weeklyData = useMemo(() => {
     const today = new Date();
     const todayDayOfWeek = today.getDay(); // 0=Pazar
@@ -37,29 +61,26 @@ export default function StatsPage() {
       goal: dailyCalorieGoal,
     }));
 
-    // Bugünkü veriyi ekle
-    days[mondayIndex].calories = dailyCaloriesConsumed;
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 6); // Son 6 gün + bugün = 7 gün
 
-    // Check-in verilerinden son 7 gündeki kayıtları eşleştir
-    if (weeklyCheckins && weeklyCheckins.length > 0) {
-      const oneWeekAgo = new Date(today);
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-      weeklyCheckins.forEach((checkin) => {
-        const checkinDate = new Date(checkin.date);
-        if (checkinDate >= oneWeekAgo && checkinDate <= today) {
-          const dow = checkinDate.getDay();
-          const idx = dow === 0 ? 6 : dow - 1;
-          // Check-in'den kalori tahmini (varsa)
-          if (days[idx].calories === 0) {
-            days[idx].calories = checkin.weightKg ? Math.round(checkin.weightKg * 25) : 0;
-          }
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(oneWeekAgo);
+        d.setDate(d.getDate() + i);
+        const iso = d.toISOString().slice(0, 10);
+        const dow = d.getDay();
+        const idx = dow === 0 ? 6 : dow - 1;
+        
+        if (actualWeeklyData[iso]) {
+            days[idx].calories = actualWeeklyData[iso].calories;
         }
-      });
     }
 
+    // Bugünkü veriyi store'dan (daha güncel olabilir) destekleyelim
+    days[mondayIndex].calories = Math.max(days[mondayIndex].calories, dailyCaloriesConsumed);
+
     return days;
-  }, [dailyCalorieGoal, dailyCaloriesConsumed, weeklyCheckins]);
+  }, [dailyCalorieGoal, dailyCaloriesConsumed, actualWeeklyData]);
 
   // Haftalık streak hesapla
   const weekStreak = useMemo(() => {
@@ -175,7 +196,7 @@ export default function StatsPage() {
         {/* Haftalık Grafik (basit bar chart) */}
         <Card
           style={{
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
             marginBottom: 16,
@@ -228,7 +249,7 @@ export default function StatsPage() {
                       marginBottom: 4,
                     }}
                   >
-                    {d.calories > 0 ? d.calories : "—"}
+                    {d.calories > 0 ? d.calories : ""}
                   </Text>
                   <div
                     style={{
@@ -336,7 +357,7 @@ export default function StatsPage() {
         {/* Makro Dağılım */}
         <Card
           style={{
-            background: "#1a1a2e",
+            background: "var(--bg-container)",
             border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 16,
           }}
@@ -350,7 +371,7 @@ export default function StatsPage() {
               letterSpacing: 0.5,
             }}
           >
-            MAKRO BESİN DAĞILIMI (BUGÜN)
+            MAKRO BESİN DAĞILIMI (BUGÜçN)
           </Text>
           <div style={{ marginTop: 20 }}>
             {[
@@ -359,21 +380,21 @@ export default function StatsPage() {
                 value: 0,
                 max: 250,
                 color: "#3b82f6",
-                emoji: "🍞",
+                emoji: "",
               },
               {
                 label: "Protein",
                 value: 0,
                 max: 120,
                 color: "#10b981",
-                emoji: "🥩",
+                emoji: "",
               },
               {
-                label: "Yağ",
+                label: "Yaş",
                 value: 0,
                 max: 65,
                 color: "#f59e0b",
-                emoji: "🧈",
+                emoji: "",
               },
             ].map((macro) => (
               <div key={macro.label} style={{ marginBottom: 18 }}>

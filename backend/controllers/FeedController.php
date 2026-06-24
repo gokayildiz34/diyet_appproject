@@ -34,7 +34,7 @@ class FeedController
     public function index(): void
     {
         $userId = AuthMiddleware::authenticate();
-        $posts = $this->postModel->getAll();
+        $posts = $this->postModel->getAll(50, 0, $userId);
 
         // Her post için kullanıcının like/support durumunu ekle
         foreach ($posts as &$post) {
@@ -50,15 +50,32 @@ class FeedController
         $userId = AuthMiddleware::authenticate();
         $content = trim((string) ($payload['content'] ?? ''));
 
-        if ($content === '') {
-            ResponseHelper::error('İçerik alanı zorunludur.', 422);
+        if ($content === '' && empty($payload['photo_base64'])) {
+            ResponseHelper::error('İçerik veya fotoğraf eklemelisiniz.', 422);
             return;
         }
 
+        $imageUrl = $payload['image_url'] ?? null;
+        if (!empty($payload['photo_base64'])) {
+            try {
+                $imgData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $payload['photo_base64']));
+                $uploadDir = __DIR__ . '/../public/uploads/';
+                if (!file_exists($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $fileName = 'post_' . $userId . '_' . time() . '.jpg';
+                file_put_contents($uploadDir . $fileName, $imgData);
+                $imageUrl = '/uploads/' . $fileName;
+            } catch (Exception $e) {
+                // Hata durumunda yoksay
+            }
+        }
+
         $post = $this->postModel->create($userId, [
-            'content'   => $content,
-            'image_url' => $payload['image_url'] ?? null,
-            'type'      => $payload['type'] ?? 'text',
+            'content'    => $content,
+            'image_url'  => $imageUrl,
+            'type'       => $payload['type'] ?? 'text',
+            'visibility' => $payload['visibility'] ?? 'public',
         ]);
 
         $post = $this->postModel->enrichWithUserStatus($post, $userId);
@@ -83,6 +100,20 @@ class FeedController
     {
         $userId = AuthMiddleware::authenticate();
         $this->postModel->like($postId, $userId);
+
+        // Bildirim Gönder (Beğeni)
+        $post = $this->postModel->getById($postId);
+        if ($post && $post['user_id'] != $userId) {
+            require_once __DIR__ . '/NotificationController.php';
+            $notifController = new NotificationController($this->db);
+            $notifController->sendPushToUserInternal(
+                (string)$post['user_id'],
+                "Yeni Beğeni!",
+                "Birisi gönderini beğendi.",
+                ['post_id' => $postId]
+            );
+        }
+
         ResponseHelper::success(['post_id' => $postId, 'liked' => true]);
     }
 
@@ -130,6 +161,20 @@ class FeedController
         }
 
         $comment = $this->postModel->addComment($postId, $userId, $content);
+
+        // Bildirim Gönder (Yorum)
+        $post = $this->postModel->getById($postId);
+        if ($post && $post['user_id'] != $userId) {
+            require_once __DIR__ . '/NotificationController.php';
+            $notifController = new NotificationController($this->db);
+            $notifController->sendPushToUserInternal(
+                (string)$post['user_id'],
+                "Yeni Yorum!",
+                "Gönderine yeni bir yorum yapıldı: " . mb_substr($content, 0, 30) . "...",
+                ['post_id' => $postId]
+            );
+        }
+
         ResponseHelper::success(['comment' => $comment], 201);
     }
 }

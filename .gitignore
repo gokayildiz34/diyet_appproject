@@ -20,3 +20,5 @@ frontend/dist/
 # Logs
 *.log
 npm-debug.log*
+
+backend/public/uploads/*

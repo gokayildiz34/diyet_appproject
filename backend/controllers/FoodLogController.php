@@ -367,46 +367,71 @@ class FoodLogController
             }
         }
 
-        // 2. Open Food Facts'i dene (ek sonuçlar için)
-        $offResults = [];
-        $url = 'https://world.openfoodfacts.org/cgi/search.pl?' . http_build_query([
-            'search_terms'  => $q,
-            'search_simple' => 1,
-            'action'        => 'process',
-            'json'          => 1,
-            'page_size'     => 10,
-            'fields'        => 'product_name,brands,nutriments',
-            'lc'            => 'tr',
-        ]);
+        // 2. Gemini API'yi dene (ek sonuçlar için)
+        $aiResults = [];
+        $apiKey = getenv('GEMINI_API_KEY') ?: '';
 
-        $ctx = stream_context_create([
-            'http' => ['timeout' => 4, 'user_agent' => 'FitPlate/1.0', 'ignore_errors' => true],
-        ]);
+        // Sadece yerleşik veritabanında az sonuç varsa veya zenginleştirmek istiyorsak
+        if (!empty($apiKey) && count($builtinResults) < 5) {
+            $prompt = "Bana '{$q}' ile eşleşen veya en çok benzeyen 3 farklı yiyeceğin 100 gramlık besin değerlerini ver. 
+Eğer '{$q}' saçma bir metinse boş bir dizi döndür.
+Cevabı SADECE şu JSON array formatında döndür, başına ve sonuna hiçbir açıklama ekleme:
+[
+  {
+    \"name\": \"Örnek Yemek Adı\",
+    \"calories\": 100,
+    \"protein\": 10.5,
+    \"carbs\": 5.2,
+    \"fat\": 2.1
+  }
+]";
 
-        $raw = @file_get_contents($url, false, $ctx);
-        if ($raw !== false) {
-            $data = json_decode($raw, true);
-            foreach (($data['products'] ?? []) as $p) {
-                $name = trim($p['product_name'] ?? '');
-                if ($name === '') continue;
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $apiKey;
+            $data = [
+                "contents" => [
+                    ["parts" => [["text" => $prompt]]]
+                ],
+                "generationConfig" => [
+                    "responseMimeType" => "application/json",
+                    "temperature" => 0.4
+                ]
+            ];
 
-                $n = $p['nutriments'] ?? [];
-                $energyKcal = (float) ($n['energy-kcal_100g'] ?? ($n['energy_100g'] ?? 0) / 4.184);
-                if ($energyKcal <= 0) continue;
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            $response = curl_exec($ch);
+            curl_close($ch);
 
-                $brand = !empty($p['brands']) ? ' (' . explode(',', $p['brands'])[0] . ')' : '';
-                $offResults[] = [
-                    'name'     => $name . $brand,
-                    'calories' => round($energyKcal, 1),
-                    'protein'  => round((float) ($n['proteins_100g'] ?? 0), 1),
-                    'carbs'    => round((float) ($n['carbohydrates_100g'] ?? 0), 1),
-                    'fat'      => round((float) ($n['fat_100g'] ?? 0), 1),
-                ];
+            if ($response) {
+                $resData = json_decode($response, true);
+                $jsonText = $resData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                $parsed = json_decode($jsonText, true);
+                
+                if (is_array($parsed)) {
+                    foreach ($parsed as $p) {
+                        if (isset($p['name'], $p['calories'])) {
+                            // AI'nin döndürdüğünü ismine AI etiketi atarak gösterelim
+                            $aiResults[] = [
+                                'name'     => $p['name'] . ' ✨',
+                                'calories' => (float)$p['calories'],
+                                'protein'  => (float)($p['protein'] ?? 0),
+                                'carbs'    => (float)($p['carbs'] ?? 0),
+                                'fat'      => (float)($p['fat'] ?? 0),
+                            ];
+                        }
+                    }
+                }
             }
         }
 
-        // Birleştir: önce yerleşik, sonra OFF
-        $all = array_merge($builtinResults, $offResults);
+        // Birleştir: önce yerleşik, sonra AI
+        $all = array_merge($builtinResults, $aiResults);
 
         ResponseHelper::success(['products' => array_slice($all, 0, 15)]);
     }
